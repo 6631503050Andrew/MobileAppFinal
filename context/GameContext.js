@@ -172,18 +172,20 @@ export const GameProvider = ({ children }) => {
     debouncedSave,
   ])
 
-  // Passive income timer
+  // Passive income timer with single batch update
   useEffect(() => {
     if (!isLoaded) return
 
     const timer = setInterval(() => {
       if (passiveIncome > 0) {
-        addCurrency(passiveIncome)
+        // Calculate total passive income for the interval
+        const totalIncome = passiveIncome // Grant the full amount at once
+        addCurrency(totalIncome)
       }
-    }, 1000)
+    }, 1000) // Update every second
 
     return () => clearInterval(timer)
-  }, [passiveIncome, isLoaded])
+  }, [passiveIncome, isLoaded, addCurrency])
 
   // Critical fix: Safe currency update function that prevents race conditions
   const updateCurrencyState = useCallback((newValue) => {
@@ -206,7 +208,7 @@ export const GameProvider = ({ children }) => {
     }
   }, [])
 
-  // Critical fix: Improved click handler with batched updates
+  // Critical fix: Improved click handler with immediate display update and optimized handling
   const handleClick = useCallback(() => {
     // Get current values from refs for accuracy
     const currentCurrency = currencyRef.current
@@ -218,6 +220,9 @@ export const GameProvider = ({ children }) => {
     // Update currency state safely
     updateCurrencyState(newCurrency)
 
+    // Update display immediately
+    setCurrency(newCurrency)
+
     // Update stats
     const newStats = {
       ...statsRef.current,
@@ -226,7 +231,10 @@ export const GameProvider = ({ children }) => {
     }
     setStats(newStats)
     statsRef.current = newStats
-  }, [updateCurrencyState])
+
+    // Debounce the save operation to prevent excessive writes
+    debouncedSave()
+  }, [updateCurrencyState, debouncedSave])
 
   // Critical fix: Safe currency addition with pending updates tracking
   const addCurrency = useCallback(
