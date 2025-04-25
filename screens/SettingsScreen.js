@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { useGame } from "../context/GameContext"
 
 export default function SettingsScreen() {
-  const { resetGame, isLoaded } = useGame()
+  const { resetGame, isLoaded, settings, updateSettings } = useGame()
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [vibrationEnabled, setVibrationEnabled] = useState(true)
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
@@ -55,10 +55,10 @@ export default function SettingsScreen() {
               <Text style={styles.settingDescription}>Enable or disable game sounds</Text>
             </View>
             <Switch
-              value={soundEnabled}
-              onValueChange={setSoundEnabled}
+              value={settings.soundEnabled}
+              onValueChange={(value) => updateSettings({ soundEnabled: value })}
               trackColor={{ false: "#334155", true: "#3b82f6" }}
-              thumbColor={soundEnabled ? "#60a5fa" : "#94a3b8"}
+              thumbColor={settings.soundEnabled ? "#60a5fa" : "#94a3b8"}
             />
           </View>
 
@@ -68,10 +68,10 @@ export default function SettingsScreen() {
               <Text style={styles.settingDescription}>Enable or disable haptic feedback</Text>
             </View>
             <Switch
-              value={vibrationEnabled}
-              onValueChange={setVibrationEnabled}
+              value={settings.vibrationEnabled}
+              onValueChange={(value) => updateSettings({ vibrationEnabled: value })}
               trackColor={{ false: "#334155", true: "#3b82f6" }}
-              thumbColor={vibrationEnabled ? "#60a5fa" : "#94a3b8"}
+              thumbColor={settings.vibrationEnabled ? "#60a5fa" : "#94a3b8"}
             />
           </View>
 
@@ -81,10 +81,10 @@ export default function SettingsScreen() {
               <Text style={styles.settingDescription}>Enable or disable game notifications</Text>
             </View>
             <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              value={settings.notificationsEnabled}
+              onValueChange={(value) => updateSettings({ notificationsEnabled: value })}
               trackColor={{ false: "#334155", true: "#3b82f6" }}
-              thumbColor={notificationsEnabled ? "#60a5fa" : "#94a3b8"}
+              thumbColor={settings.notificationsEnabled ? "#60a5fa" : "#94a3b8"}
             />
           </View>
         </View>

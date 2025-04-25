@@ -5,6 +5,7 @@ import { Alert } from "react-native"
 import { saveGameState, loadGameState } from "../utils/storage"
 import { planets } from "../data/planets"
 import { upgrades as upgradesList } from "../data/upgrades"
+import { achievements } from "../data/achievements"
 
 const GameContext = createContext()
 
@@ -32,6 +33,12 @@ export const GameProvider = ({ children }) => {
   })
   const [isLoaded, setIsLoaded] = useState(false)
   const [error, setError] = useState(null)
+  const [settings, setSettings] = useState({
+    soundEnabled: true,
+    vibrationEnabled: true,
+    notificationsEnabled: true,
+  })
+  const [unlockedAchievements, setUnlockedAchievements] = useState({})
 
   // Debug log
   useEffect(() => {
@@ -60,6 +67,14 @@ export const GameProvider = ({ children }) => {
               lastPlayed: new Date().toISOString(),
             },
           )
+          setSettings(
+            savedState.settings || {
+              soundEnabled: true,
+              vibrationEnabled: true,
+              notificationsEnabled: true,
+            },
+          )
+          setUnlockedAchievements(savedState.unlockedAchievements || {})
         } else {
           console.log("No saved game state found, using defaults")
         }
@@ -90,6 +105,8 @@ export const GameProvider = ({ children }) => {
               ...stats,
               lastPlayed: new Date().toISOString(),
             },
+            settings: settings,
+            unlockedAchievements: unlockedAchievements,
           }
           await saveGameState(gameState)
         } catch (err) {
@@ -99,7 +116,7 @@ export const GameProvider = ({ children }) => {
 
       saveGame()
     }
-  }, [currency, clickValue, passiveIncome, currentPlanet, upgrades, stats, isLoaded])
+  }, [currency, clickValue, passiveIncome, currentPlanet, upgrades, stats, isLoaded, settings, unlockedAchievements])
 
   // Passive income timer
   useEffect(() => {
@@ -200,6 +217,69 @@ export const GameProvider = ({ children }) => {
     })
   }, [])
 
+  const updateSettings = useCallback((newSettings) => {
+    setSettings((prev) => ({
+      ...prev,
+      ...newSettings,
+    }))
+  }, [])
+
+  useEffect(() => {
+    if (!isLoaded) return
+
+    // Check for new achievements
+    achievements.forEach((achievement) => {
+      const achievementId = achievement.id
+
+      // Skip if already unlocked
+      if (unlockedAchievements[achievementId]) return
+
+      // Check if requirement is met
+      if (achievement.requirement(stats, currentPlanet, passiveIncome)) {
+        // Unlock achievement
+        setUnlockedAchievements((prev) => ({
+          ...prev,
+          [achievementId]: {
+            unlockedAt: new Date().toISOString(),
+            claimed: false,
+          },
+        }))
+
+        // Show notification (if we had a notification system)
+        if (settings.notificationsEnabled) {
+          console.log(`Achievement unlocked: ${achievement.name}`)
+          // In a real app, we would show a proper notification here
+        }
+      }
+    })
+  }, [isLoaded, stats, currentPlanet, passiveIncome, unlockedAchievements, settings.notificationsEnabled])
+
+  // Add claimAchievement function
+  const claimAchievement = useCallback(
+    (achievementId) => {
+      const achievement = achievements.find((a) => a.id === achievementId)
+      if (!achievement) return false
+
+      const achievementData = unlockedAchievements[achievementId]
+      if (!achievementData || achievementData.claimed) return false
+
+      // Mark as claimed
+      setUnlockedAchievements((prev) => ({
+        ...prev,
+        [achievementId]: {
+          ...prev[achievementId],
+          claimed: true,
+        },
+      }))
+
+      // Add reward
+      addCurrency(achievement.reward)
+
+      return true
+    },
+    [unlockedAchievements, addCurrency],
+  )
+
   // Create value object
   const value = {
     currency,
@@ -215,6 +295,11 @@ export const GameProvider = ({ children }) => {
     resetGame,
     planets,
     upgradesList,
+    settings,
+    updateSettings,
+    achievements,
+    unlockedAchievements,
+    claimAchievement,
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

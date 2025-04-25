@@ -3,6 +3,34 @@ import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
+import { memo } from "react"
+
+// Create a memoized upgrade item component
+const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
+  const cost = item.baseCost * Math.pow(item.costMultiplier, currentLevel)
+  const canAfford = currency >= cost
+
+  return (
+    <TouchableOpacity
+      style={[styles.upgradeItem, !canAfford && styles.upgradeItemDisabled]}
+      onPress={() => canAfford && onPurchase(item.id)}
+      disabled={!canAfford}
+      activeOpacity={0.7}
+    >
+      <View style={styles.upgradeIcon}>
+        <Ionicons name={item.icon} size={24} color="#fff" />
+      </View>
+      <View style={styles.upgradeInfo}>
+        <Text style={styles.upgradeName}>{item.name}</Text>
+        <Text style={styles.upgradeDescription}>{item.description}</Text>
+        {currentLevel > 0 && <Text style={styles.upgradeLevel}>Level: {currentLevel}</Text>}
+      </View>
+      <View style={styles.upgradeCost}>
+        <Text style={[styles.costText, !canAfford && styles.costTextDisabled]}>{formatNumber(cost)}</Text>
+      </View>
+    </TouchableOpacity>
+  )
+})
 
 export default function UpgradesScreen() {
   const { currency, upgrades, upgradesList, purchaseUpgrade, isLoaded } = useGame()
@@ -43,31 +71,10 @@ export default function UpgradesScreen() {
     console.log("Purchase success:", success)
   }
 
+  // Replace the renderUpgradeItem function with:
   const renderUpgradeItem = ({ item }) => {
     const currentLevel = upgrades[item.id] || 0
-    const cost = item.baseCost * Math.pow(item.costMultiplier, currentLevel)
-    const canAfford = currency >= cost
-
-    return (
-      <TouchableOpacity
-        style={[styles.upgradeItem, !canAfford && styles.upgradeItemDisabled]}
-        onPress={() => canAfford && handlePurchase(item.id)}
-        disabled={!canAfford}
-        activeOpacity={0.7}
-      >
-        <View style={styles.upgradeIcon}>
-          <Ionicons name={item.icon} size={24} color="#fff" />
-        </View>
-        <View style={styles.upgradeInfo}>
-          <Text style={styles.upgradeName}>{item.name}</Text>
-          <Text style={styles.upgradeDescription}>{item.description}</Text>
-          {currentLevel > 0 && <Text style={styles.upgradeLevel}>Level: {currentLevel}</Text>}
-        </View>
-        <View style={styles.upgradeCost}>
-          <Text style={[styles.costText, !canAfford && styles.costTextDisabled]}>{formatNumber(cost)}</Text>
-        </View>
-      </TouchableOpacity>
-    )
+    return <UpgradeItem item={item} currency={currency} currentLevel={currentLevel} onPurchase={handlePurchase} />
   }
 
   return (
@@ -82,9 +89,15 @@ export default function UpgradesScreen() {
           renderItem={renderUpgradeItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.upgradesList}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          windowSize={5}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          windowSize={3}
+          removeClippedSubviews={true}
+          getItemLayout={(data, index) => ({
+            length: 84, // Approximate height of each item
+            offset: 84 * index,
+            index,
+          })}
         />
       ) : (
         <View style={styles.emptyContainer}>

@@ -18,11 +18,35 @@ import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
 
 export default function GameScreen() {
-  const { currency, clickValue, passiveIncome, currentPlanet, handleClick, planets, isLoaded, error } = useGame()
+  const { currency, clickValue, passiveIncome, currentPlanet, handleClick, planets, isLoaded, error, settings } =
+    useGame()
 
   const [clickEffects, setClickEffects] = useState([])
   const planetScale = useRef(new Animated.Value(1)).current
   const [isPressed, setIsPressed] = useState(false)
+  const effectTimeouts = useRef([])
+
+  const currencyAnimation = useRef(new Animated.Value(0)).current
+  const [displayCurrency, setDisplayCurrency] = useState(0)
+
+  // Add a new useEffect for currency animation
+  useEffect(() => {
+    // Animate the currency value
+    Animated.timing(currencyAnimation, {
+      toValue: currency,
+      duration: 500,
+      useNativeDriver: false,
+    }).start()
+
+    // Update the display currency
+    const listener = currencyAnimation.addListener(({ value }) => {
+      setDisplayCurrency(Math.floor(value))
+    })
+
+    return () => {
+      currencyAnimation.removeListener(listener)
+    }
+  }, [currency, currencyAnimation])
 
   // Debug log to verify component is rendering
   useEffect(() => {
@@ -37,7 +61,7 @@ export default function GameScreen() {
     console.log("Planet pressed!")
 
     // Optional vibration feedback
-    if (Platform.OS === "android") {
+    if (Platform.OS === "android" && settings.vibrationEnabled) {
       Vibration.vibrate(10)
     }
 
@@ -67,9 +91,11 @@ export default function GameScreen() {
     setClickEffects((prev) => [...prev, newEffect])
 
     // Remove effect after animation
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       setClickEffects((prev) => prev.filter((effect) => effect.id !== id))
     }, 1000)
+
+    effectTimeouts.current.push(timeoutId)
 
     // Call the actual click handler
     handleClick()
@@ -83,6 +109,12 @@ export default function GameScreen() {
   const handlePressOut = () => {
     setIsPressed(false)
   }
+
+  useEffect(() => {
+    return () => {
+      effectTimeouts.current.forEach(clearTimeout)
+    }
+  }, [])
 
   if (!isLoaded) {
     return (
@@ -118,7 +150,7 @@ export default function GameScreen() {
   return (
     <LinearGradient colors={["#0f172a", "#1e293b"]} style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.currencyText}>{formatNumber(currency)} Stardust</Text>
+        <Text style={styles.currencyText}>{formatNumber(displayCurrency)} Stardust</Text>
         <Text style={styles.rateText}>
           +{formatNumber(clickValue)} per click | +{formatNumber(passiveIncome)} per second
         </Text>
@@ -162,7 +194,7 @@ export default function GameScreen() {
                   source={planet.image}
                   style={styles.planetImage}
                   resizeMode="contain"
-                  defaultSource={require("../assets/planets/placeholder.png")}
+                  defaultSource={planet.image}
                 />
               </Animated.View>
             </Pressable>
@@ -180,7 +212,7 @@ export default function GameScreen() {
                   source={planet.image}
                   style={styles.planetImage}
                   resizeMode="contain"
-                  defaultSource={require("../assets/planets/placeholder.png")}
+                  defaultSource={planet.image}
                 />
               </Animated.View>
             </TouchableOpacity>

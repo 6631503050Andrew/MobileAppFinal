@@ -1,11 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native"
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
 
 export default function StatsScreen() {
-  const { stats, currency, clickValue, passiveIncome, isLoaded } = useGame()
+  const { stats, currency, clickValue, passiveIncome, isLoaded, achievements, unlockedAchievements, claimAchievement } =
+    useGame()
 
   if (!isLoaded) {
     return (
@@ -128,7 +129,44 @@ export default function StatsScreen() {
 
         <View style={styles.achievementsCard}>
           <Text style={styles.cardTitle}>Achievements</Text>
-          <Text style={styles.comingSoonText}>Coming soon!</Text>
+
+          {achievements.map((achievement) => {
+            const isUnlocked = unlockedAchievements[achievement.id]
+            const isClaimed = isUnlocked && unlockedAchievements[achievement.id].claimed
+
+            return (
+              <View
+                key={achievement.id}
+                style={[styles.achievementRow, isUnlocked ? styles.achievementUnlocked : styles.achievementLocked]}
+              >
+                <View style={styles.achievementIcon}>
+                  <Ionicons name={achievement.icon} size={24} color={isUnlocked ? "#4ade80" : "#64748b"} />
+                </View>
+                <View style={styles.achievementInfo}>
+                  <Text
+                    style={[
+                      styles.achievementName,
+                      isUnlocked ? styles.achievementNameUnlocked : styles.achievementNameLocked,
+                    ]}
+                  >
+                    {achievement.name}
+                  </Text>
+                  <Text style={styles.achievementDescription}>{achievement.description}</Text>
+                  {isUnlocked && <Text style={styles.achievementReward}>Reward: {achievement.reward} Stardust</Text>}
+                </View>
+                {isUnlocked && !isClaimed && (
+                  <TouchableOpacity style={styles.claimButton} onPress={() => claimAchievement(achievement.id)}>
+                    <Text style={styles.claimButtonText}>Claim</Text>
+                  </TouchableOpacity>
+                )}
+                {isUnlocked && isClaimed && (
+                  <View style={styles.claimedBadge}>
+                    <Text style={styles.claimedText}>Claimed</Text>
+                  </View>
+                )}
+              </View>
+            )
+          })}
         </View>
       </ScrollView>
     </LinearGradient>
@@ -208,5 +246,77 @@ const styles = StyleSheet.create({
     color: "#94a3b8",
     marginTop: 20,
     marginBottom: 20,
+  },
+  achievementRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  achievementLocked: {
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
+    borderColor: "#334155",
+  },
+  achievementUnlocked: {
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    borderColor: "#4ade80",
+  },
+  achievementIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(15, 23, 42, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  achievementInfo: {
+    flex: 1,
+  },
+  achievementName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  achievementNameLocked: {
+    color: "#64748b",
+  },
+  achievementNameUnlocked: {
+    color: "#fff",
+  },
+  achievementDescription: {
+    fontSize: 14,
+    color: "#94a3b8",
+  },
+  achievementReward: {
+    fontSize: 12,
+    color: "#fbbf24",
+    marginTop: 4,
+  },
+  claimButton: {
+    backgroundColor: "#4ade80",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  claimButtonText: {
+    color: "#0f172a",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  claimedBadge: {
+    backgroundColor: "#64748b",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  claimedText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
   },
 })
