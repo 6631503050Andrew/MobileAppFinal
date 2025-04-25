@@ -1,20 +1,110 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+"use client"
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+import "react-native-gesture-handler"
+import React, { useEffect } from "react"
+import { NavigationContainer } from "@react-navigation/native"
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
+import { StatusBar } from "expo-status-bar"
+import { Ionicons } from "@expo/vector-icons"
+import { SafeAreaProvider } from "react-native-safe-area-context"
+import { LogBox, Text, View } from "react-native"
+import { GameProvider } from "./context/GameContext"
+import GameScreen from "./screens/GameScreen"
+import UpgradesScreen from "./screens/UpgradesScreen"
+import StatsScreen from "./screens/StatsScreen"
+import SettingsScreen from "./screens/SettingsScreen"
+
+// Ignore specific warnings
+LogBox.ignoreLogs([
+  "Non-serializable values were found in the navigation state",
+  "VirtualizedLists should never be nested",
+])
+
+const Tab = createBottomTabNavigator()
+
+// Error boundary component
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error, info) {
+    console.error("Error caught by boundary:", error, info)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20, backgroundColor: "#0f172a" }}
+        >
+          <Text style={{ color: "white", fontSize: 20, marginBottom: 20 }}>Something went wrong!</Text>
+          <Text style={{ color: "#94a3b8", textAlign: "center" }}>{this.state.error?.toString()}</Text>
+        </View>
+      )
+    }
+    return this.props.children
+  }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  useEffect(() => {
+    console.log("App initialized")
+  }, [])
+
+  return (
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <GameProvider>
+          <NavigationContainer>
+            <StatusBar style="light" />
+            <Tab.Navigator
+              screenOptions={({ route }) => ({
+                tabBarIcon: ({ focused, color, size }) => {
+                  let iconName
+
+                  if (route.name === "Game") {
+                    iconName = focused ? "planet" : "planet-outline"
+                  } else if (route.name === "Upgrades") {
+                    iconName = focused ? "rocket" : "rocket-outline"
+                  } else if (route.name === "Stats") {
+                    iconName = focused ? "stats-chart" : "stats-chart-outline"
+                  } else if (route.name === "Settings") {
+                    iconName = focused ? "settings" : "settings-outline"
+                  }
+
+                  return <Ionicons name={iconName} size={size} color={color} />
+                },
+                tabBarActiveTintColor: "#8c5eff",
+                tabBarInactiveTintColor: "#7f7f7f",
+                tabBarStyle: {
+                  backgroundColor: "#111827",
+                  borderTopColor: "#2d3748",
+                  paddingBottom: 5,
+                  paddingTop: 5,
+                  height: 60,
+                },
+                headerStyle: {
+                  backgroundColor: "#111827",
+                  borderBottomColor: "#2d3748",
+                  borderBottomWidth: 1,
+                },
+                headerTintColor: "#fff",
+                headerTitleStyle: {
+                  fontWeight: "bold",
+                },
+              })}
+            >
+              <Tab.Screen name="Game" component={GameScreen} options={{ title: "Space Clicker" }} />
+              <Tab.Screen name="Upgrades" component={UpgradesScreen} />
+              <Tab.Screen name="Stats" component={StatsScreen} />
+              <Tab.Screen name="Settings" component={SettingsScreen} />
+            </Tab.Navigator>
+          </NavigationContainer>
+        </GameProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
+  )
+}
