@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import {
   View,
   Text,
@@ -12,41 +12,121 @@ import {
   Pressable,
   Vibration,
   ActivityIndicator,
+  ImageBackground,
 } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
 import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
+
+// Optimization: Use a constant for animation configurations
+const ANIMATION_CONFIG = {
+  CLICK_EFFECT_DURATION: 1000,
+  BOUNCE_DURATION_MIN: 80,
+  BOUNCE_DURATION_MAX: 150,
+  SCALE_MIN: 0.92,
+  SCALE_MAX: 0.96,
+}
 
 export default function GameScreen() {
   const { currency, clickValue, passiveIncome, currentPlanet, handleClick, planets, isLoaded, error, settings } =
     useGame()
 
+  // State for UI elements
   const [clickEffects, setClickEffects] = useState([])
-  const planetScale = useRef(new Animated.Value(1)).current
   const [isPressed, setIsPressed] = useState(false)
-  const effectTimeouts = useRef([])
 
-  const currencyAnimation = useRef(new Animated.Value(0)).current
+  // Critical fix: Improved currency display system
   const [displayCurrency, setDisplayCurrency] = useState(0)
+  const displayCurrencyRef = useRef(0)
+  const currencyAnimationRef = useRef(null)
+  const lastCurrencyUpdateTime = useRef(Date.now())
 
-  // Add a new useEffect for currency animation
+  // Animation refs
+  const planetScale = useRef(new Animated.Value(1)).current
+  const effectTimeouts = useRef([])
+  const animationsInProgress = useRef([])
+  const lastClickTime = useRef(0)
+
+  // Critical fix: Improved currency display animation
   useEffect(() => {
-    // Animate the currency value
-    Animated.timing(currencyAnimation, {
-      toValue: currency,
-      duration: 500,
-      useNativeDriver: false,
-    }).start()
-
-    // Update the display currency
-    const listener = currencyAnimation.addListener(({ value }) => {
-      setDisplayCurrency(Math.floor(value))
-    })
-
-    return () => {
-      currencyAnimation.removeListener(listener)
+    // Cancel any ongoing animation
+    if (currencyAnimationRef.current) {
+      clearTimeout(currencyAnimationRef.current)
     }
-  }, [currency, currencyAnimation])
+
+    // Don't animate if this is the initial load
+    if (displayCurrencyRef.current === 0 && currency > 0) {
+      displayCurrencyRef.current = currency
+      setDisplayCurrency(currency)
+      return
+    }
+
+    // Calculate animation parameters
+    const now = Date.now()
+    const timeSinceLastUpdate = now - lastCurrencyUpdateTime.current
+
+    // If updates are coming in very rapidly, use a shorter animation
+    // or skip animation entirely for very rapid updates
+    const shouldAnimate = timeSinceLastUpdate > 50
+    const animationDuration = timeSinceLastUpdate < 200 ? 100 : 300
+
+    lastCurrencyUpdateTime.current = now
+
+    if (!shouldAnimate) {
+      // Skip animation for very rapid updates
+      displayCurrencyRef.current = currency
+      setDisplayCurrency(currency)
+      return
+    }
+
+    // Start values
+    const startValue = displayCurrencyRef.current
+    const endValue = currency
+    const difference = endValue - startValue
+
+    // Don't animate tiny changes
+    if (Math.abs(difference) < 5) {
+      displayCurrencyRef.current = currency
+      setDisplayCurrency(currency)
+      return
+    }
+
+    // Animation variables
+    const startTime = Date.now()
+    const animate = () => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / animationDuration, 1)
+
+      // Easing function for smoother animation
+      const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress
+
+      // Calculate current value
+      const currentValue = Math.floor(startValue + difference * easedProgress)
+
+      // Update display
+      displayCurrencyRef.current = currentValue
+      setDisplayCurrency(currentValue)
+
+      // Continue animation if not complete
+      if (progress < 1) {
+        currencyAnimationRef.current = setTimeout(animate, 16) // ~60fps
+      } else {
+        // Ensure we end exactly at the target value
+        displayCurrencyRef.current = endValue
+        setDisplayCurrency(endValue)
+        currencyAnimationRef.current = null
+      }
+    }
+
+    // Start animation
+    animate()
+
+    // Cleanup on unmount
+    return () => {
+      if (currencyAnimationRef.current) {
+        clearTimeout(currencyAnimationRef.current)
+      }
+    }
+  }, [currency])
 
   // Debug log to verify component is rendering
   useEffect(() => {
@@ -56,64 +136,114 @@ export default function GameScreen() {
     }
   }, [isLoaded, currentPlanet, planets])
 
-  // Handle planet click with animation
-  const onPlanetPress = () => {
-    console.log("Planet pressed!")
+  // Cleanup animations on unmount
+  useEffect(() => {
+    return () => {
+      effectTimeouts.current.forEach(clearTimeout)
+      animationsInProgress.current.forEach((anim) => anim.stop())
+      if (currencyAnimationRef.current) {
+        clearTimeout(currencyAnimationRef.current)
+      }
+    }
+  }, [])
+
+  // Optimization: Memoize the planet click handler
+  const onPlanetPress = useCallback(() => {
+    // Throttle clicks slightly to prevent overwhelming the animation system
+    const now = Date.now()
+    if (now - lastClickTime.current < 50) {
+      // Still process the click for game state, just don't animate every single one
+      handleClick()
+      return
+    }
+    lastClickTime.current = now
 
     // Optional vibration feedback
     if (Platform.OS === "android" && settings.vibrationEnabled) {
       Vibration.vibrate(10)
     }
 
-    // Scale animation
-    Animated.sequence([
+    // Generate random bounce parameters for variety
+    const scaleValue =
+      Math.random() * (ANIMATION_CONFIG.SCALE_MAX - ANIMATION_CONFIG.SCALE_MIN) + ANIMATION_CONFIG.SCALE_MIN
+
+    const duration = Math.floor(
+      Math.random() * (ANIMATION_CONFIG.BOUNCE_DURATION_MAX - ANIMATION_CONFIG.BOUNCE_DURATION_MIN) +
+        ANIMATION_CONFIG.BOUNCE_DURATION_MIN,
+    )
+
+    // Stop any running animations
+    planetScale.stopAnimation()
+
+    // Create new bounce animation sequence
+    const bounceAnimation = Animated.sequence([
       Animated.timing(planetScale, {
-        toValue: 0.9,
-        duration: 100,
+        toValue: scaleValue,
+        duration: duration,
         useNativeDriver: true,
       }),
       Animated.timing(planetScale, {
         toValue: 1,
-        duration: 100,
+        duration: duration * 1.2,
         useNativeDriver: true,
       }),
-    ]).start()
+    ])
 
-    // Add click effect
-    const id = Date.now()
+    // Start the animation and track it
+    bounceAnimation.start()
+    animationsInProgress.current.push(bounceAnimation)
+
+    // Add click effect with more randomization
+    const id = Date.now() + Math.random()
+
+    // Create a larger area around the planet for click effects
+    const areaSize = 300
+    const x = Math.random() * areaSize - areaSize / 2
+    const y = Math.random() * areaSize - areaSize / 2
+
     const newEffect = {
       id,
       value: `+${formatNumber(clickValue)}`,
-      x: Math.random() * 100 - 50, // Random position around the click
-      y: -20,
+      x,
+      y,
+      opacity: new Animated.Value(1),
+      translateY: new Animated.Value(0),
     }
 
     setClickEffects((prev) => [...prev, newEffect])
 
+    // Animate the click effect
+    Animated.parallel([
+      Animated.timing(newEffect.opacity, {
+        toValue: 0,
+        duration: ANIMATION_CONFIG.CLICK_EFFECT_DURATION,
+        useNativeDriver: true,
+      }),
+      Animated.timing(newEffect.translateY, {
+        toValue: -50,
+        duration: ANIMATION_CONFIG.CLICK_EFFECT_DURATION,
+        useNativeDriver: true,
+      }),
+    ]).start()
+
     // Remove effect after animation
     const timeoutId = setTimeout(() => {
       setClickEffects((prev) => prev.filter((effect) => effect.id !== id))
-    }, 1000)
+    }, ANIMATION_CONFIG.CLICK_EFFECT_DURATION)
 
     effectTimeouts.current.push(timeoutId)
 
     // Call the actual click handler
     handleClick()
-  }
+  }, [handleClick, clickValue, settings.vibrationEnabled, planetScale])
 
   // Handle press in/out for visual feedback
-  const handlePressIn = () => {
+  const handlePressIn = useCallback(() => {
     setIsPressed(true)
-  }
+  }, [])
 
-  const handlePressOut = () => {
+  const handlePressOut = useCallback(() => {
     setIsPressed(false)
-  }
-
-  useEffect(() => {
-    return () => {
-      effectTimeouts.current.forEach(clearTimeout)
-    }
   }, [])
 
   if (!isLoaded) {
@@ -148,7 +278,7 @@ export default function GameScreen() {
   const planet = planets[currentPlanet]
 
   return (
-    <LinearGradient colors={["#0f172a", "#1e293b"]} style={styles.container}>
+    <ImageBackground source={require("../assets/space-background.png")} style={styles.container} resizeMode="cover">
       <View style={styles.header}>
         <Text style={styles.currencyText}>{formatNumber(displayCurrency)} Stardust</Text>
         <Text style={styles.rateText}>
@@ -166,8 +296,8 @@ export default function GameScreen() {
               style={[
                 styles.clickEffect,
                 {
-                  transform: [{ translateX: effect.x }, { translateY: effect.y }],
-                  opacity: new Animated.Value(1),
+                  transform: [{ translateX: effect.x }, { translateY: effect.translateY }],
+                  opacity: effect.opacity,
                 },
               ]}
             >
@@ -190,12 +320,7 @@ export default function GameScreen() {
                   },
                 ]}
               >
-                <Image
-                  source={planet.image}
-                  style={styles.planetImage}
-                  resizeMode="contain"
-                  defaultSource={planet.image}
-                />
+                <Image source={planet.image} style={styles.planetImage} resizeMode="contain" />
               </Animated.View>
             </Pressable>
           ) : (
@@ -208,12 +333,7 @@ export default function GameScreen() {
                   },
                 ]}
               >
-                <Image
-                  source={planet.image}
-                  style={styles.planetImage}
-                  resizeMode="contain"
-                  defaultSource={planet.image}
-                />
+                <Image source={planet.image} style={styles.planetImage} resizeMode="contain" />
               </Animated.View>
             </TouchableOpacity>
           )}
@@ -225,7 +345,7 @@ export default function GameScreen() {
       <View style={styles.footer}>
         <Text style={styles.footerText}>Tap the planet to collect Stardust!</Text>
       </View>
-    </LinearGradient>
+    </ImageBackground>
   )
 }
 
@@ -270,18 +390,27 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 10,
     paddingTop: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 12,
+    padding: 10,
   },
   currencyText: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 5,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   rateText: {
     fontSize: 16,
     color: "#94a3b8",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   planetContainer: {
     flex: 1,
@@ -292,44 +421,49 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
-    marginBottom: 10,
+    marginBottom: 30,
+    position: "absolute",
+    top: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   clickArea: {
-    width: 250,
-    height: 250,
+    width: 320,
+    height: 320,
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
   },
   planetButton: {
-    width: 200,
-    height: 200,
+    width: 240,
+    height: 240,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 100,
+    borderRadius: 120,
     overflow: "hidden",
   },
   planetButtonPressed: {
     opacity: 0.8,
   },
   planetImageContainer: {
-    width: 200,
-    height: 200,
+    width: 240,
+    height: 240,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#fff",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
+    shadowOpacity: 0.5,
+    shadowRadius: 25,
   },
   planetImage: {
-    width: 180,
-    height: 180,
+    width: 220,
+    height: 220,
   },
   clickEffect: {
     position: "absolute",
     color: "#fbbf24",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: 1, height: 1 },
@@ -340,6 +474,12 @@ const styles = StyleSheet.create({
     color: "#94a3b8",
     textAlign: "center",
     marginTop: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 10,
+    borderRadius: 8,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   footer: {
     alignItems: "center",
@@ -349,5 +489,8 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     color: "#64748b",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 })

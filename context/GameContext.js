@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useState, useEffect, useContext, useCallback } from "react"
+import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react"
 import { Alert } from "react-native"
 import { saveGameState, loadGameState } from "../utils/storage"
 import { planets } from "../data/planets"
@@ -40,6 +40,27 @@ export const GameProvider = ({ children }) => {
   })
   const [unlockedAchievements, setUnlockedAchievements] = useState({})
 
+  // Critical fix: Use refs for accurate currency tracking and transaction locking
+  const currencyRef = useRef(0)
+  const clickValueRef = useRef(1)
+  const statsRef = useRef(stats)
+  const saveTimeoutRef = useRef(null)
+  const isTransactionInProgressRef = useRef(false) // Lock for purchase transactions
+  const pendingCurrencyUpdatesRef = useRef(0) // Track pending currency updates
+
+  // Update refs when state changes
+  useEffect(() => {
+    currencyRef.current = currency
+  }, [currency])
+
+  useEffect(() => {
+    clickValueRef.current = clickValue
+  }, [clickValue])
+
+  useEffect(() => {
+    statsRef.current = stats
+  }, [stats])
+
   // Debug log
   useEffect(() => {
     console.log("GameContext initialized")
@@ -53,20 +74,28 @@ export const GameProvider = ({ children }) => {
         const savedState = await loadGameState()
         if (savedState) {
           console.log("Game state loaded successfully")
-          setCurrency(savedState.currency || 0)
+          // Ensure currency is never negative when loading
+          const safeInitialCurrency = Math.max(0, savedState.currency || 0)
+          setCurrency(safeInitialCurrency)
+          currencyRef.current = safeInitialCurrency
+
           setClickValue(savedState.clickValue || 1)
+          clickValueRef.current = savedState.clickValue || 1
+
           setPassiveIncome(savedState.passiveIncome || 0)
           setCurrentPlanet(savedState.currentPlanet || 0)
           setUpgrades(savedState.upgrades || {})
-          setStats(
-            savedState.stats || {
-              totalClicks: 0,
-              totalCurrency: 0,
-              totalSpent: 0,
-              gameStarted: new Date().toISOString(),
-              lastPlayed: new Date().toISOString(),
-            },
-          )
+
+          const loadedStats = savedState.stats || {
+            totalClicks: 0,
+            totalCurrency: 0,
+            totalSpent: 0,
+            gameStarted: new Date().toISOString(),
+            lastPlayed: new Date().toISOString(),
+          }
+          setStats(loadedStats)
+          statsRef.current = loadedStats
+
           setSettings(
             savedState.settings || {
               soundEnabled: true,
@@ -90,33 +119,58 @@ export const GameProvider = ({ children }) => {
     loadGame()
   }, [])
 
+  // Optimization: Debounce save operations to prevent excessive writes
+  const debouncedSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const gameState = {
+          currency: currencyRef.current,
+          clickValue,
+          passiveIncome,
+          currentPlanet,
+          upgrades,
+          stats: {
+            ...statsRef.current,
+            lastPlayed: new Date().toISOString(),
+          },
+          settings,
+          unlockedAchievements,
+        }
+        await saveGameState(gameState)
+        console.log("Game state saved successfully")
+      } catch (err) {
+        console.error("Error saving game state:", err)
+      }
+    }, 1000) // Save after 1 second of inactivity
+  }, [clickValue, passiveIncome, currentPlanet, upgrades, settings, unlockedAchievements])
+
   // Save game state when it changes
   useEffect(() => {
     if (isLoaded) {
-      const saveGame = async () => {
-        try {
-          const gameState = {
-            currency,
-            clickValue,
-            passiveIncome,
-            currentPlanet,
-            upgrades,
-            stats: {
-              ...stats,
-              lastPlayed: new Date().toISOString(),
-            },
-            settings: settings,
-            unlockedAchievements: unlockedAchievements,
-          }
-          await saveGameState(gameState)
-        } catch (err) {
-          console.error("Error saving game state:", err)
-        }
-      }
-
-      saveGame()
+      debouncedSave()
     }
-  }, [currency, clickValue, passiveIncome, currentPlanet, upgrades, stats, isLoaded, settings, unlockedAchievements])
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [
+    currency,
+    clickValue,
+    passiveIncome,
+    currentPlanet,
+    upgrades,
+    stats,
+    isLoaded,
+    settings,
+    unlockedAchievements,
+    debouncedSave,
+  ])
 
   // Passive income timer
   useEffect(() => {
@@ -131,53 +185,135 @@ export const GameProvider = ({ children }) => {
     return () => clearInterval(timer)
   }, [passiveIncome, isLoaded])
 
-  // Handle clicks - using useCallback to prevent unnecessary re-renders
-  const handleClick = useCallback(() => {
-    console.log("Click handled! Adding currency:", clickValue)
-    addCurrency(clickValue)
-    setStats((prev) => ({
-      ...prev,
-      totalClicks: prev.totalClicks + 1,
-    }))
-  }, [clickValue])
+  // Critical fix: Safe currency update function that prevents race conditions
+  const updateCurrencyState = useCallback((newValue) => {
+    // Ensure currency never goes below zero
+    const safeValue = Math.max(0, newValue)
 
-  // Add currency
-  const addCurrency = useCallback((amount) => {
-    setCurrency((prev) => {
-      const newValue = prev + amount
-      console.log(`Currency updated: ${prev} + ${amount} = ${newValue}`)
-      return newValue
-    })
-    setStats((prev) => ({
-      ...prev,
-      totalCurrency: prev.totalCurrency + amount,
-    }))
+    // Update both the state and ref
+    setCurrency(safeValue)
+    currencyRef.current = safeValue
+
+    // Process any pending updates
+    if (pendingCurrencyUpdatesRef.current > 0) {
+      const pendingAmount = pendingCurrencyUpdatesRef.current
+      pendingCurrencyUpdatesRef.current = 0
+
+      // Apply the pending updates
+      const finalValue = Math.max(0, safeValue + pendingAmount)
+      setCurrency(finalValue)
+      currencyRef.current = finalValue
+    }
   }, [])
 
-  // Purchase upgrade
+  // Critical fix: Improved click handler with batched updates
+  const handleClick = useCallback(() => {
+    // Get current values from refs for accuracy
+    const currentCurrency = currencyRef.current
+    const currentClickValue = clickValueRef.current
+
+    // Calculate new currency value
+    const newCurrency = currentCurrency + currentClickValue
+
+    // Update currency state safely
+    updateCurrencyState(newCurrency)
+
+    // Update stats
+    const newStats = {
+      ...statsRef.current,
+      totalClicks: statsRef.current.totalClicks + 1,
+      totalCurrency: statsRef.current.totalCurrency + currentClickValue,
+    }
+    setStats(newStats)
+    statsRef.current = newStats
+  }, [updateCurrencyState])
+
+  // Critical fix: Safe currency addition with pending updates tracking
+  const addCurrency = useCallback(
+    (amount) => {
+      if (amount <= 0) return
+
+      // If we're in the middle of a transaction, queue this update
+      if (isTransactionInProgressRef.current) {
+        pendingCurrencyUpdatesRef.current += amount
+        return
+      }
+
+      const currentCurrency = currencyRef.current
+      const newCurrency = currentCurrency + amount
+
+      // Update currency state safely
+      updateCurrencyState(newCurrency)
+
+      // Update total currency stat
+      setStats((prev) => {
+        const newStats = {
+          ...prev,
+          totalCurrency: prev.totalCurrency + amount,
+        }
+        statsRef.current = newStats
+        return newStats
+      })
+    },
+    [updateCurrencyState],
+  )
+
+  // Critical fix: Transaction-based purchase system to prevent negative currency
   const purchaseUpgrade = useCallback(
     (upgradeId) => {
-      console.log("Attempting to purchase upgrade:", upgradeId)
-      const upgrade = upgradesList.find((u) => u.id === upgradeId)
-      if (!upgrade) {
-        console.log("Upgrade not found:", upgradeId)
+      // Prevent concurrent purchases
+      if (isTransactionInProgressRef.current) {
+        console.log("Transaction in progress, please wait")
         return false
       }
 
-      const currentLevel = upgrades[upgradeId] || 0
-      const cost = upgrade.baseCost * Math.pow(upgrade.costMultiplier, currentLevel)
+      try {
+        // Start transaction
+        isTransactionInProgressRef.current = true
 
-      if (currency >= cost) {
+        console.log("Attempting to purchase upgrade:", upgradeId)
+        const upgrade = upgradesList.find((u) => u.id === upgradeId)
+        if (!upgrade) {
+          console.log("Upgrade not found:", upgradeId)
+          return false
+        }
+
+        const currentLevel = upgrades[upgradeId] || 0
+        const cost = upgrade.baseCost * Math.pow(upgrade.costMultiplier, currentLevel)
+
+        // Critical fix: Get the most up-to-date currency value and validate
+        const currentCurrency = currencyRef.current
+
+        if (currentCurrency < cost) {
+          console.log(`Not enough currency to purchase upgrade ${upgradeId}. Have: ${currentCurrency}, Need: ${cost}`)
+          return false
+        }
+
         console.log(`Purchasing upgrade ${upgradeId} for ${cost} currency`)
-        setCurrency((prev) => prev - cost)
-        setStats((prev) => ({
-          ...prev,
-          totalSpent: prev.totalSpent + cost,
-        }))
+
+        // Critical fix: Calculate new currency and ensure it's not negative
+        const newCurrency = Math.max(0, currentCurrency - cost)
+
+        // Update currency state safely
+        updateCurrencyState(newCurrency)
+
+        // Update stats
+        setStats((prev) => {
+          const newStats = {
+            ...prev,
+            totalSpent: prev.totalSpent + cost,
+          }
+          statsRef.current = newStats
+          return newStats
+        })
 
         // Apply upgrade effects
         if (upgrade.type === "click") {
-          setClickValue((prev) => prev + upgrade.value)
+          setClickValue((prev) => {
+            const newValue = prev + upgrade.value
+            clickValueRef.current = newValue
+            return newValue
+          })
         } else if (upgrade.type === "passive") {
           setPassiveIncome((prev) => prev + upgrade.value)
         } else if (upgrade.type === "planet" && currentLevel === 0) {
@@ -192,30 +328,50 @@ export const GameProvider = ({ children }) => {
         }))
 
         return true
-      }
+      } finally {
+        // End transaction and process any pending updates
+        isTransactionInProgressRef.current = false
 
-      console.log(`Not enough currency to purchase upgrade ${upgradeId}. Have: ${currency}, Need: ${cost}`)
-      return false
+        // Process any pending currency updates that came in during the transaction
+        if (pendingCurrencyUpdatesRef.current > 0) {
+          const pendingAmount = pendingCurrencyUpdatesRef.current
+          pendingCurrencyUpdatesRef.current = 0
+          addCurrency(pendingAmount)
+        }
+      }
     },
-    [currency, upgrades],
+    [upgrades, updateCurrencyState, addCurrency],
   )
 
   // Reset game
   const resetGame = useCallback(() => {
     console.log("Resetting game...")
-    setCurrency(0)
+
+    // Reset all values safely
+    updateCurrencyState(0)
+
     setClickValue(1)
+    clickValueRef.current = 1
+
     setPassiveIncome(0)
     setCurrentPlanet(0)
     setUpgrades({})
-    setStats({
+
+    const newStats = {
       totalClicks: 0,
       totalCurrency: 0,
       totalSpent: 0,
       gameStarted: new Date().toISOString(),
       lastPlayed: new Date().toISOString(),
-    })
-  }, [])
+    }
+    setStats(newStats)
+    statsRef.current = newStats
+
+    setUnlockedAchievements({})
+
+    // Clear any pending updates
+    pendingCurrencyUpdatesRef.current = 0
+  }, [updateCurrencyState])
 
   const updateSettings = useCallback((newSettings) => {
     setSettings((prev) => ({
@@ -235,7 +391,7 @@ export const GameProvider = ({ children }) => {
       if (unlockedAchievements[achievementId]) return
 
       // Check if requirement is met
-      if (achievement.requirement(stats, currentPlanet, passiveIncome)) {
+      if (achievement.requirement(statsRef.current, currentPlanet, passiveIncome)) {
         // Unlock achievement
         setUnlockedAchievements((prev) => ({
           ...prev,

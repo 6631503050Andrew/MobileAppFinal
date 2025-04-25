@@ -1,20 +1,43 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
+"use client"
+
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, ImageBackground } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
-import { memo } from "react"
+import { memo, useCallback, useState } from "react"
 
 // Create a memoized upgrade item component
 const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
   const cost = item.baseCost * Math.pow(item.costMultiplier, currentLevel)
   const canAfford = currency >= cost
 
+  // Critical fix: Add purchase cooldown to prevent rapid clicking
+  const [isPurchasing, setIsPurchasing] = useState(false)
+
+  const handlePurchase = useCallback(() => {
+    if (isPurchasing || !canAfford) return
+
+    // Set purchasing state to prevent multiple rapid clicks
+    setIsPurchasing(true)
+
+    // Attempt purchase
+    onPurchase(item.id)
+
+    // Reset purchasing state after a short delay
+    setTimeout(() => {
+      setIsPurchasing(false)
+    }, 300)
+  }, [isPurchasing, canAfford, item.id, onPurchase])
+
   return (
     <TouchableOpacity
-      style={[styles.upgradeItem, !canAfford && styles.upgradeItemDisabled]}
-      onPress={() => canAfford && onPurchase(item.id)}
-      disabled={!canAfford}
+      style={[
+        styles.upgradeItem,
+        !canAfford && styles.upgradeItemDisabled,
+        isPurchasing && styles.upgradeItemPurchasing,
+      ]}
+      onPress={handlePurchase}
+      disabled={!canAfford || isPurchasing}
       activeOpacity={0.7}
     >
       <View style={styles.upgradeIcon}>
@@ -78,7 +101,7 @@ export default function UpgradesScreen() {
   }
 
   return (
-    <LinearGradient colors={["#0f172a", "#1e293b"]} style={styles.container}>
+    <ImageBackground source={require("../assets/space-background.png")} style={styles.container} resizeMode="cover">
       <View style={styles.header}>
         <Text style={styles.currencyText}>{formatNumber(currency)} Stardust</Text>
       </View>
@@ -105,7 +128,7 @@ export default function UpgradesScreen() {
           <Text style={styles.emptyText}>All upgrades purchased!</Text>
         </View>
       )}
-    </LinearGradient>
+    </ImageBackground>
   )
 }
 
@@ -129,12 +152,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
     paddingTop: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 12,
+    padding: 10,
   },
   currencyText: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 5,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   upgradesList: {
     paddingBottom: 20,
@@ -151,6 +180,10 @@ const styles = StyleSheet.create({
   },
   upgradeItemDisabled: {
     opacity: 0.6,
+  },
+  upgradeItemPurchasing: {
+    opacity: 0.8,
+    backgroundColor: "rgba(40, 51, 69, 0.8)",
   },
   upgradeIcon: {
     width: 40,
@@ -203,5 +236,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#fff",
     marginTop: 16,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
 })
