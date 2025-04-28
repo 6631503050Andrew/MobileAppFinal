@@ -19,7 +19,14 @@ export const hats = {
       rarity: "common",
       offset: { x: 0, y: -120 }, // Adjusted y position to be higher above the planet
     },
-    CHat2: { id: "CHat2", name: "Currency Hat 2", rarity: "common", offset: { x: 0, y: -110 } },
+
+    CHat2: {
+        id: "CHat2",
+        name: "Devil Horns",
+        rarity: "common",
+        offset: { x: 0, y: -120 },
+    },
+    
     CHat3: { id: "CHat3", name: "Currency Hat 3", rarity: "uncommon", offset: { x: 0, y: -110 } },
     CHat4: { id: "CHat4", name: "Currency Hat 4", rarity: "uncommon", offset: { x: 0, y: -110 } },
     CHat5: { id: "CHat5", name: "Currency Hat 5", rarity: "rare", offset: { x: 0, y: -110 } },

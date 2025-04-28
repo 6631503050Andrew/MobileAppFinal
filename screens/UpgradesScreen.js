@@ -18,6 +18,21 @@ import { formatNumber } from "../utils/formatters"
 import { memo, useCallback, useState, useEffect } from "react"
 import { getRarityColor } from "../data/hats"
 
+// Helper function to get hat image source - consistent with GameScreen
+const getHatImage = (hatId) => {
+  // Currently we only have CHat1 implemented
+  if (hatId === "CHat1") {
+    try {
+      return require("../assets/hats/CHat1.png")
+    } catch (error) {
+      console.error("Failed to load hat image:", error)
+    }
+  }
+
+  // For debugging - return a visible placeholder for other hats
+  return require("../assets/hats/CHat1.png")
+}
+
 // Create a memoized upgrade item component
 const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
   const cost = item.baseCost * Math.pow(item.costMultiplier, currentLevel)
@@ -145,11 +160,7 @@ const HatItem = memo(({ hat, isUnlocked, isEquipped, onToggleEquip }) => {
     >
       <View style={styles.hatImageContainer}>
         {isUnlocked ? (
-          <Image
-            source={hat.id === "CHat1" ? require("../assets/hats/CHat1.png") : null}
-            style={styles.hatItemImage}
-            resizeMode="contain"
-          />
+          <Image source={getHatImage(hat.id)} style={styles.hatItemImage} resizeMode="contain" />
         ) : (
           <Ionicons name="lock-closed" size={24} color="#64748b" />
         )}
@@ -255,6 +266,7 @@ export default function UpgradesScreen() {
   // Handle hat equipping
   const handleToggleEquipHat = useCallback(
     (hatId) => {
+      console.log("Toggling hat from UpgradesScreen:", hatId)
       toggleEquipHat(hatId)
     },
     [toggleEquipHat],
@@ -442,13 +454,7 @@ export default function UpgradesScreen() {
                     { borderColor: getRarityColor(hats[chestResult.hat].rarity) },
                   ]}
                 >
-                  {chestResult.hat === "CHat1" && (
-                    <Image
-                      source={require("../assets/hats/CHat1.png")}
-                      style={styles.hatResultImage}
-                      resizeMode="contain"
-                    />
-                  )}
+                  <Image source={getHatImage(chestResult.hat)} style={styles.hatResultImage} resizeMode="contain" />
                 </View>
                 <Text style={styles.hatResultName}>{hats[chestResult.hat].name}</Text>
                 <Text style={[styles.hatResultRarity, { color: getRarityColor(hats[chestResult.hat].rarity) }]}>

@@ -722,10 +722,22 @@ export const GameProvider = ({ children }) => {
 
       // Equip the hat
       console.log("Equipping hat:", hatId)
+
+      // Debug log hat data
+      if (hats[hatId]) {
+        console.log("Hat data:", {
+          name: hats[hatId].name,
+          rarity: hats[hatId].rarity,
+          offset: hats[hatId].offset,
+        })
+      } else {
+        console.warn("Warning: Hat data not found for ID:", hatId)
+      }
+
       setEquippedHat(hatId)
       return { equipped: true, hatId }
     },
-    [equippedHat, unlockedHats],
+    [equippedHat, unlockedHats, hats],
   )
 
   // Check if ad chest is available (considering cooldown)

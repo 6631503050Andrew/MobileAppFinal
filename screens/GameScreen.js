@@ -26,6 +26,26 @@ const ANIMATION_CONFIG = {
   SCALE_MAX: 0.96,
 }
 
+// Helper function to get hat image source
+const getHatImage = (hatId) => {
+  console.log(`Loading hat image for: ${hatId}`)
+
+  // Currently we only have CHat1 implemented
+  if (hatId === "CHat1") {
+    try {
+      return require("../assets/hats/CHat1.png")
+    } catch (error) {
+      console.error("Failed to load hat image:", error)
+    }
+  }
+
+  // For debugging - return a visible placeholder for other hats
+  return require("../assets/hats/CHat1.png")
+}
+
+// Declare __DEV__ if it's not already defined (e.g., in a testing environment)
+const __DEV__ = process.env.NODE_ENV === "development"
+
 export default function GameScreen() {
   const {
     currency,
@@ -44,6 +64,7 @@ export default function GameScreen() {
   // State for UI elements
   const [clickEffects, setClickEffects] = useState([])
   const [isPressed, setIsPressed] = useState(false)
+  const [hatLoaded, setHatLoaded] = useState(false)
 
   // Critical fix: Improved currency display system
   const [displayCurrency, setDisplayCurrency] = useState(0)
@@ -278,6 +299,17 @@ export default function GameScreen() {
     setIsPressed(false)
   }, [])
 
+  // Handle hat image loading
+  const onHatLoad = useCallback(() => {
+    console.log("Hat image loaded successfully")
+    setHatLoaded(true)
+  }, [])
+
+  const onHatError = useCallback((error) => {
+    console.error("Error loading hat image:", error)
+    setHatLoaded(false)
+  }, [])
+
   if (!isLoaded) {
     return (
       <View style={styles.loadingContainer}>
@@ -338,81 +370,73 @@ export default function GameScreen() {
             </Animated.Text>
           ))}
 
-          {Platform.OS === "ios" ? (
-            <Pressable
-              onPress={onPlanetPress}
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
-              style={[styles.planetButton, isPressed && styles.planetButtonPressed]}
-            >
-              {/* Hat positioned above planet */}
-              {hatData && (
-                <Animated.View
-                  style={[
-                    styles.hatContainer,
-                    {
-                      transform: [{ scale: hatScale }],
-                      top: hatData.offset.y,
-                      left: hatData.offset.x,
-                    },
-                  ]}
-                >
-                  <Image
-                    source={equippedHat === "CHat1" ? require("../assets/hats/CHat1.png") : null}
-                    style={styles.hatImage}
-                    resizeMode="contain"
-                  />
-                </Animated.View>
-              )}
-
+          {/* Main interactive area */}
+          <View style={styles.interactiveArea}>
+            {/* Hat layer - rendered OUTSIDE and BEFORE the planet button to ensure proper layering */}
+            {hatData && equippedHat && (
               <Animated.View
                 style={[
-                  styles.planetImageContainer,
+                  styles.hatContainer,
                   {
-                    transform: [{ scale: planetScale }],
+                    transform: [{ scale: hatScale }],
                   },
                 ]}
               >
-                <Image source={planet.image} style={styles.planetImage} resizeMode="contain" />
+                <Image
+                  source={getHatImage(equippedHat)}
+                  style={styles.hatImage}
+                  resizeMode="contain"
+                  onLoad={onHatLoad}
+                  onError={onHatError}
+                />
               </Animated.View>
-            </Pressable>
-          ) : (
-            <TouchableOpacity activeOpacity={0.8} onPress={onPlanetPress} style={styles.planetButton}>
-              {/* Hat positioned above planet */}
-              {hatData && (
+            )}
+
+            {/* Planet button with click handling */}
+            {Platform.OS === "ios" ? (
+              <Pressable
+                onPress={onPlanetPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                style={[styles.planetButton, isPressed && styles.planetButtonPressed]}
+              >
                 <Animated.View
                   style={[
-                    styles.hatContainer,
+                    styles.planetImageContainer,
                     {
-                      transform: [{ scale: hatScale }],
-                      top: hatData.offset.y,
-                      left: hatData.offset.x,
+                      transform: [{ scale: planetScale }],
                     },
                   ]}
                 >
-                  <Image
-                    source={equippedHat === "CHat1" ? require("../assets/hats/CHat1.png") : null}
-                    style={styles.hatImage}
-                    resizeMode="contain"
-                  />
+                  <Image source={planet.image} style={styles.planetImage} resizeMode="contain" />
                 </Animated.View>
-              )}
-
-              <Animated.View
-                style={[
-                  styles.planetImageContainer,
-                  {
-                    transform: [{ scale: planetScale }],
-                  },
-                ]}
-              >
-                <Image source={planet.image} style={styles.planetImage} resizeMode="contain" />
-              </Animated.View>
-            </TouchableOpacity>
-          )}
+              </Pressable>
+            ) : (
+              <TouchableOpacity activeOpacity={0.8} onPress={onPlanetPress} style={styles.planetButton}>
+                <Animated.View
+                  style={[
+                    styles.planetImageContainer,
+                    {
+                      transform: [{ scale: planetScale }],
+                    },
+                  ]}
+                >
+                  <Image source={planet.image} style={styles.planetImage} resizeMode="contain" />
+                </Animated.View>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         <Text style={styles.planetDescription}>{planet.description}</Text>
+
+        {/* Debug info for hat rendering */}
+        {__DEV__ && equippedHat && (
+          <View style={styles.debugInfo}>
+            <Text style={styles.debugText}>Hat: {equippedHat}</Text>
+            <Text style={styles.debugText}>Loaded: {hatLoaded ? "Yes" : "No"}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -508,14 +532,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
   },
+  interactiveArea: {
+    width: 240,
+    height: 240,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
   planetButton: {
     width: 240,
     height: 240,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 120,
-    overflow: "visible", // Changed to visible to allow hat to overflow
-    position: "relative", // Added for absolute positioning of hat
+    position: "relative",
   },
   planetButtonPressed: {
     opacity: 0.8,
@@ -536,14 +566,14 @@ const styles = StyleSheet.create({
   },
   hatContainer: {
     position: "absolute",
-    zIndex: 10,
     width: 120,
     height: 60,
     justifyContent: "center",
     alignItems: "center",
-    // Default position, will be overridden by hat-specific offsets
-    top: -110,
-    left: 0,
+    zIndex: 1000, // Ensure hat is on top
+    top: -60, // Position hat above planet
+    left: 60, // Center hat horizontally (240/2 - 120/2)
+    elevation: 10, // For Android
   },
   hatImage: {
     width: 120,
@@ -558,6 +588,7 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+    zIndex: 100,
   },
   planetDescription: {
     fontSize: 16,
@@ -582,5 +613,17 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  debugInfo: {
+    position: "absolute",
+    bottom: 10,
+    left: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    padding: 5,
+    borderRadius: 5,
+  },
+  debugText: {
+    color: "#fff",
+    fontSize: 10,
   },
 })

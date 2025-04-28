@@ -43,19 +43,46 @@ export const validateHatRendering = (hatId, hats, unlockedHats) => {
    * @returns {any} - The image source or null if not available
    */
   export const getHatImageSource = (hatId) => {
-    // Currently we only have CHat1 implemented
-    if (hatId === "CHat1") {
+    // For debugging
+    console.log(`Attempting to load hat image for: ${hatId}`)
+  
+    try {
+      // Currently we only have CHat1 implemented with an actual image
+      if (hatId === "CHat1") {
+        return require("../assets/hats/CHat1.png")
+      }
+  
+      // For other hats, we'll use CHat1 as a placeholder until proper assets are added
+      // This ensures something is displayed rather than nothing
+      return require("../assets/hats/CHat1.png")
+    } catch (error) {
+      console.error(`Failed to load hat image for ${hatId}:`, error)
+  
+      // As a fallback, try to return the CHat1 image
       try {
         return require("../assets/hats/CHat1.png")
-      } catch (error) {
-        console.error("Failed to load hat image:", error)
+      } catch (fallbackError) {
+        console.error("Failed to load fallback hat image:", fallbackError)
         return null
       }
     }
+  }
   
-    // For other hats, return null until they're implemented
-    console.warn(`No image source available for hat: ${hatId}`)
-    return null
+  /**
+   * Calculates the optimal position for a hat based on planet size
+   * @param {string} hatId - The ID of the hat
+   * @param {number} planetSize - The size of the planet in pixels
+   * @returns {object} - The x and y offsets for the hat
+   */
+  export const calculateHatPosition = (hatId, planetSize = 220) => {
+    // Get the base offset from the hat data
+    const hatData = require("../data/hats").hats[hatId]
+    if (!hatData || !hatData.offset) {
+      return { x: 0, y: -planetSize / 2 - 10 } // Default fallback position
+    }
+  
+    // Use the hat's defined offset
+    return hatData.offset
   }
   
   /**
