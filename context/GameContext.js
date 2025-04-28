@@ -6,6 +6,7 @@ import { saveGameState, loadGameState } from "../utils/storage"
 import { planets } from "../data/planets"
 import { upgrades as upgradesList } from "../data/upgrades"
 import { achievements } from "../data/achievements"
+import { hats, getRandomHat, calculateCurrencyChestCost, getPlanetHat } from "../data/hats"
 
 const GameContext = createContext()
 
@@ -31,6 +32,7 @@ export const GameProvider = ({ children }) => {
     gameStarted: new Date().toISOString(),
     lastPlayed: new Date().toISOString(),
     version: "2.0.0", // Added version tracking for migrations
+    lastPlayed: new Date().toISOString(),
   })
   const [isLoaded, setIsLoaded] = useState(false)
   const [error, setError] = useState(null)
@@ -40,6 +42,25 @@ export const GameProvider = ({ children }) => {
     notificationsEnabled: true,
   })
   const [unlockedAchievements, setUnlockedAchievements] = useState({})
+
+  // New state for chests and hats
+  const [unlockedHats, setUnlockedHats] = useState({})
+  const [equippedHat, setEquippedHat] = useState(null)
+  const [chests, setChests] = useState({
+    advertisement: {
+      available: true,
+      lastOpened: null,
+      cooldownMinutes: 30, // 30 minutes cooldown for ad chests
+    },
+    currency: {
+      purchaseCount: 0,
+      nextCost: 500, // Initial cost
+    },
+    planet: {
+      unopened: 0, // Number of unopened planet chests
+      lastPlanetUnlocked: null, // Last planet that gave a chest
+    },
+  })
 
   // Critical fix: Use refs for accurate currency tracking and transaction locking
   const currencyRef = useRef(0)
@@ -119,6 +140,27 @@ export const GameProvider = ({ children }) => {
             },
           )
           setUnlockedAchievements(savedState.unlockedAchievements || {})
+
+          // Load chest and hat data
+          setUnlockedHats(savedState.unlockedHats || {})
+          setEquippedHat(savedState.equippedHat || null)
+          setChests(
+            savedState.chests || {
+              advertisement: {
+                available: true,
+                lastOpened: null,
+                cooldownMinutes: 30,
+              },
+              currency: {
+                purchaseCount: 0,
+                nextCost: 500,
+              },
+              planet: {
+                unopened: 0,
+                lastPlanetUnlocked: null,
+              },
+            },
+          )
         } else {
           console.log("No saved game state found, using defaults")
         }
@@ -156,6 +198,10 @@ export const GameProvider = ({ children }) => {
           },
           settings,
           unlockedAchievements,
+          // Save chest and hat data
+          unlockedHats,
+          equippedHat,
+          chests,
         }
         await saveGameState(gameState)
         console.log("Game state saved successfully")
@@ -163,7 +209,17 @@ export const GameProvider = ({ children }) => {
         console.error("Error saving game state:", err)
       }
     }, 1000) // Save after 1 second of inactivity
-  }, [clickValue, passiveIncome, currentPlanet, upgrades, settings, unlockedAchievements])
+  }, [
+    clickValue,
+    passiveIncome,
+    currentPlanet,
+    upgrades,
+    settings,
+    unlockedAchievements,
+    unlockedHats,
+    equippedHat,
+    chests,
+  ])
 
   // Save game state when it changes
   useEffect(() => {
@@ -186,6 +242,9 @@ export const GameProvider = ({ children }) => {
     isLoaded,
     settings,
     unlockedAchievements,
+    unlockedHats,
+    equippedHat,
+    chests,
     debouncedSave,
   ])
 
@@ -345,6 +404,21 @@ export const GameProvider = ({ children }) => {
         } else if (upgrade.type === "planet" && currentLevel === 0) {
           // Unlock new planet
           setCurrentPlanet((prev) => Math.min(prev + 1, planets.length - 1))
+
+          // Add a planet chest when unlocking a new planet
+          const newPlanetId = planets[Math.min(currentPlanet + 1, planets.length - 1)].id
+
+          // Check if this planet is different from the last one that gave a chest
+          if (chests.planet.lastPlanetUnlocked !== newPlanetId) {
+            setChests((prev) => ({
+              ...prev,
+              planet: {
+                ...prev.planet,
+                unopened: prev.planet.unopened + 1,
+                lastPlanetUnlocked: newPlanetId,
+              },
+            }))
+          }
         }
 
         // Update upgrade level
@@ -366,7 +440,7 @@ export const GameProvider = ({ children }) => {
         }
       }
     },
-    [upgrades, updateCurrencyState, addCurrency],
+    [upgrades, updateCurrencyState, addCurrency, chests.planet.lastPlanetUnlocked, currentPlanet],
   )
 
   // Reset game
@@ -395,6 +469,25 @@ export const GameProvider = ({ children }) => {
     statsRef.current = newStats
 
     setUnlockedAchievements({})
+
+    // Reset chest and hat data
+    setUnlockedHats({})
+    setEquippedHat(null)
+    setChests({
+      advertisement: {
+        available: true,
+        lastOpened: null,
+        cooldownMinutes: 30,
+      },
+      currency: {
+        purchaseCount: 0,
+        nextCost: 500,
+      },
+      planet: {
+        unopened: 0,
+        lastPlanetUnlocked: null,
+      },
+    })
 
     // Clear any pending updates
     pendingCurrencyUpdatesRef.current = 0
@@ -464,6 +557,221 @@ export const GameProvider = ({ children }) => {
     [unlockedAchievements, addCurrency],
   )
 
+  // New functions for chest and hat system
+
+  // Open advertisement chest
+  const openAdChest = useCallback(() => {
+    // Check if ad chest is available
+    if (!chests.advertisement.available) {
+      console.log("Advertisement chest is on cooldown")
+      return { success: false, message: "Chest is on cooldown" }
+    }
+
+    // Simulate watching an ad (in a real app, you would integrate an ad SDK here)
+    console.log("Simulating ad watch...")
+
+    // Get a random hat from the advertisement chest
+    const hatId = getRandomHat("advertisement")
+    if (!hatId) {
+      return { success: false, message: "Failed to get a hat" }
+    }
+
+    // Add the hat to unlocked hats
+    setUnlockedHats((prev) => ({
+      ...prev,
+      [hatId]: {
+        unlocked: true,
+        unlockedAt: new Date().toISOString(),
+      },
+    }))
+
+    // Set cooldown for the ad chest
+    setChests((prev) => ({
+      ...prev,
+      advertisement: {
+        ...prev.advertisement,
+        available: false,
+        lastOpened: new Date().toISOString(),
+      },
+    }))
+
+    return {
+      success: true,
+      message: `You got a new hat: ${hats[hatId].name}!`,
+      hat: hatId,
+    }
+  }, [chests.advertisement])
+
+  // Open currency chest
+  const openCurrencyChest = useCallback(() => {
+    // Check if player has enough currency
+    const cost = chests.currency.nextCost
+
+    if (currencyRef.current < cost) {
+      return { success: false, message: `Not enough stardust. Need ${cost}.` }
+    }
+
+    // Deduct currency
+    const newCurrency = Math.max(0, currencyRef.current - cost)
+    updateCurrencyState(newCurrency)
+
+    // Update stats
+    setStats((prev) => ({
+      ...prev,
+      totalSpent: prev.totalSpent + cost,
+    }))
+
+    // Get a random hat from the currency chest
+    const hatId = getRandomHat("currency")
+    if (!hatId) {
+      return { success: false, message: "Failed to get a hat" }
+    }
+
+    // Add the hat to unlocked hats
+    setUnlockedHats((prev) => {
+      console.log("Adding hat to unlocked hats:", hatId)
+      return {
+        ...prev,
+        [hatId]: {
+          unlocked: true,
+          unlockedAt: new Date().toISOString(),
+        },
+      }
+    })
+
+    // Increase the cost for the next purchase
+    const newPurchaseCount = chests.currency.purchaseCount + 1
+    const nextCost = calculateCurrencyChestCost(newPurchaseCount)
+
+    setChests((prev) => ({
+      ...prev,
+      currency: {
+        purchaseCount: newPurchaseCount,
+        nextCost: nextCost,
+      },
+    }))
+
+    return {
+      success: true,
+      message: `You got a new hat: ${hats[hatId].name}!`,
+      hat: hatId,
+    }
+  }, [chests.currency, updateCurrencyState])
+
+  // Open planet chest
+  const openPlanetChest = useCallback(() => {
+    // Check if there are unopened planet chests
+    if (chests.planet.unopened <= 0) {
+      return { success: false, message: "No planet chests available" }
+    }
+
+    // Get the current planet
+    const planet = planets[currentPlanet]
+    if (!planet) {
+      return { success: false, message: "Invalid planet" }
+    }
+
+    // Get the hat for this planet
+    const hatId = getPlanetHat(planet.id)
+    if (!hatId) {
+      return { success: false, message: "No hat available for this planet" }
+    }
+
+    // Add the hat to unlocked hats
+    setUnlockedHats((prev) => ({
+      ...prev,
+      [hatId]: {
+        unlocked: true,
+        unlockedAt: new Date().toISOString(),
+      },
+    }))
+
+    // Decrease the number of unopened chests
+    setChests((prev) => ({
+      ...prev,
+      planet: {
+        ...prev.planet,
+        unopened: Math.max(0, prev.planet.unopened - 1),
+      },
+    }))
+
+    return {
+      success: true,
+      message: `You got a new hat: ${hats[hatId].name}!`,
+      hat: hatId,
+    }
+  }, [chests.planet, currentPlanet])
+
+  // Equip/unequip hat
+  const toggleEquipHat = useCallback(
+    (hatId) => {
+      console.log("Toggling hat:", hatId, "Current equipped hat:", equippedHat)
+
+      // If the hat is already equipped, unequip it
+      if (equippedHat === hatId) {
+        console.log("Unequipping hat:", hatId)
+        setEquippedHat(null)
+        return { equipped: false, hatId: null }
+      }
+
+      // Check if the hat is unlocked
+      if (!unlockedHats[hatId] || !unlockedHats[hatId].unlocked) {
+        console.log("Hat not unlocked:", hatId)
+        return { equipped: false, hatId: null, error: "Hat not unlocked" }
+      }
+
+      // Equip the hat
+      console.log("Equipping hat:", hatId)
+      setEquippedHat(hatId)
+      return { equipped: true, hatId }
+    },
+    [equippedHat, unlockedHats],
+  )
+
+  // Check if ad chest is available (considering cooldown)
+  useEffect(() => {
+    if (!isLoaded) return
+
+    // Check ad chest cooldown
+    const checkAdChestCooldown = () => {
+      if (!chests.advertisement.lastOpened) {
+        // No cooldown if never opened
+        if (!chests.advertisement.available) {
+          setChests((prev) => ({
+            ...prev,
+            advertisement: {
+              ...prev.advertisement,
+              available: true,
+            },
+          }))
+        }
+        return
+      }
+
+      const now = new Date()
+      const lastOpened = new Date(chests.advertisement.lastOpened)
+      const cooldownMs = chests.advertisement.cooldownMinutes * 60 * 1000
+      const cooldownEnds = new Date(lastOpened.getTime() + cooldownMs)
+
+      if (now >= cooldownEnds && !chests.advertisement.available) {
+        // Cooldown has ended, make chest available again
+        setChests((prev) => ({
+          ...prev,
+          advertisement: {
+            ...prev.advertisement,
+            available: true,
+          },
+        }))
+      }
+    }
+
+    // Check cooldown immediately and then every minute
+    checkAdChestCooldown()
+    const interval = setInterval(checkAdChestCooldown, 60000)
+
+    return () => clearInterval(interval)
+  }, [isLoaded, chests.advertisement])
+
   // Memoize the value object for better performance in React 18
   const value = useMemo(
     () => ({
@@ -485,6 +793,15 @@ export const GameProvider = ({ children }) => {
       achievements,
       unlockedAchievements,
       claimAchievement,
+      // Add chest and hat related values and functions
+      unlockedHats,
+      equippedHat,
+      chests,
+      openAdChest,
+      openCurrencyChest,
+      openPlanetChest,
+      toggleEquipHat,
+      hats,
     }),
     [
       currency,
@@ -502,6 +819,13 @@ export const GameProvider = ({ children }) => {
       updateSettings,
       unlockedAchievements,
       claimAchievement,
+      unlockedHats,
+      equippedHat,
+      chests,
+      openAdChest,
+      openCurrencyChest,
+      openPlanetChest,
+      toggleEquipHat,
     ],
   )
 

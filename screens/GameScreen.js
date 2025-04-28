@@ -27,8 +27,19 @@ const ANIMATION_CONFIG = {
 }
 
 export default function GameScreen() {
-  const { currency, clickValue, passiveIncome, currentPlanet, handleClick, planets, isLoaded, error, settings } =
-    useGame()
+  const {
+    currency,
+    clickValue,
+    passiveIncome,
+    currentPlanet,
+    handleClick,
+    planets,
+    isLoaded,
+    error,
+    settings,
+    equippedHat,
+    hats,
+  } = useGame()
 
   // State for UI elements
   const [clickEffects, setClickEffects] = useState([])
@@ -42,12 +53,12 @@ export default function GameScreen() {
 
   // Animation refs
   const planetScale = useRef(new Animated.Value(1)).current
+  const hatScale = useRef(new Animated.Value(1)).current
   const effectTimeouts = useRef([])
   const animationsInProgress = useRef([])
   const lastClickTime = useRef(0)
 
   // Critical fix: Improved currency display animation
-  // Optimized for React 18 and SDK 52
   useEffect(() => {
     // Cancel any ongoing animation
     if (currencyAnimationRef.current) {
@@ -131,11 +142,14 @@ export default function GameScreen() {
 
   // Debug log to verify component is rendering
   useEffect(() => {
-    console.log("GameScreen rendered with SDK 52, isLoaded:", isLoaded)
+    console.log("GameScreen rendered, isLoaded:", isLoaded)
     if (planets && planets.length > 0 && currentPlanet < planets.length) {
       console.log("Current planet:", planets[currentPlanet]?.name)
     }
-  }, [isLoaded, currentPlanet, planets])
+    if (equippedHat) {
+      console.log("Equipped hat:", equippedHat)
+    }
+  }, [isLoaded, currentPlanet, planets, equippedHat])
 
   // Cleanup animations on unmount
   useEffect(() => {
@@ -149,7 +163,6 @@ export default function GameScreen() {
   }, [])
 
   // Optimization: Memoize the planet click handler
-  // Updated for SDK 52 animation handling
   const onPlanetPress = useCallback(() => {
     // Throttle clicks slightly to prevent overwhelming the animation system
     const now = Date.now()
@@ -176,9 +189,9 @@ export default function GameScreen() {
 
     // Stop any running animations
     planetScale.stopAnimation()
+    hatScale.stopAnimation()
 
-    // Create new bounce animation sequence
-    // Updated for SDK 52 animation handling
+    // Create new bounce animation sequence for planet and hat
     const bounceAnimation = Animated.sequence([
       Animated.timing(planetScale, {
         toValue: scaleValue,
@@ -192,9 +205,25 @@ export default function GameScreen() {
       }),
     ])
 
-    // Start the animation and track it
+    // Animate hat in sync with planet
+    const hatBounceAnimation = Animated.sequence([
+      Animated.timing(hatScale, {
+        toValue: scaleValue,
+        duration: duration,
+        useNativeDriver: true,
+      }),
+      Animated.timing(hatScale, {
+        toValue: 1,
+        duration: duration * 1.2,
+        useNativeDriver: true,
+      }),
+    ])
+
+    // Start the animations and track them
     bounceAnimation.start()
+    hatBounceAnimation.start()
     animationsInProgress.current.push(bounceAnimation)
+    animationsInProgress.current.push(hatBounceAnimation)
 
     // Add click effect with more randomization
     const id = Date.now() + Math.random()
@@ -238,7 +267,7 @@ export default function GameScreen() {
 
     // Call the actual click handler
     handleClick()
-  }, [handleClick, clickValue, settings.vibrationEnabled, planetScale])
+  }, [handleClick, clickValue, settings.vibrationEnabled, planetScale, hatScale])
 
   // Handle press in/out for visual feedback
   const handlePressIn = useCallback(() => {
@@ -279,6 +308,7 @@ export default function GameScreen() {
   }
 
   const planet = planets[currentPlanet]
+  const hatData = equippedHat ? hats[equippedHat] : null
 
   return (
     <ImageBackground source={require("../assets/space-background.png")} style={styles.container} resizeMode="cover">
@@ -315,6 +345,26 @@ export default function GameScreen() {
               onPressOut={handlePressOut}
               style={[styles.planetButton, isPressed && styles.planetButtonPressed]}
             >
+              {/* Hat positioned above planet */}
+              {hatData && (
+                <Animated.View
+                  style={[
+                    styles.hatContainer,
+                    {
+                      transform: [{ scale: hatScale }],
+                      top: hatData.offset.y,
+                      left: hatData.offset.x,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={equippedHat === "CHat1" ? require("../assets/hats/CHat1.png") : null}
+                    style={styles.hatImage}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+              )}
+
               <Animated.View
                 style={[
                   styles.planetImageContainer,
@@ -328,6 +378,26 @@ export default function GameScreen() {
             </Pressable>
           ) : (
             <TouchableOpacity activeOpacity={0.8} onPress={onPlanetPress} style={styles.planetButton}>
+              {/* Hat positioned above planet */}
+              {hatData && (
+                <Animated.View
+                  style={[
+                    styles.hatContainer,
+                    {
+                      transform: [{ scale: hatScale }],
+                      top: hatData.offset.y,
+                      left: hatData.offset.x,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={equippedHat === "CHat1" ? require("../assets/hats/CHat1.png") : null}
+                    style={styles.hatImage}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+              )}
+
               <Animated.View
                 style={[
                   styles.planetImageContainer,
@@ -444,7 +514,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 120,
-    overflow: "hidden",
+    overflow: "visible", // Changed to visible to allow hat to overflow
+    position: "relative", // Added for absolute positioning of hat
   },
   planetButtonPressed: {
     opacity: 0.8,
@@ -462,6 +533,22 @@ const styles = StyleSheet.create({
   planetImage: {
     width: 220,
     height: 220,
+  },
+  hatContainer: {
+    position: "absolute",
+    zIndex: 10,
+    width: 120,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    // Default position, will be overridden by hat-specific offsets
+    top: -110,
+    left: 0,
+  },
+  hatImage: {
+    width: 120,
+    height: 60,
+    resizeMode: "contain",
   },
   clickEffect: {
     position: "absolute",

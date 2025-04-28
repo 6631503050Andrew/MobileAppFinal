@@ -33,6 +33,14 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error("Error caught by boundary:", error, info)
+
+    // Log additional details for hat rendering issues
+    if (error.message && error.message.includes("hat")) {
+      console.error("Hat rendering error detected. Details:", {
+        error: error.toString(),
+        componentStack: info.componentStack,
+      })
+    }
   }
 
   render() {
