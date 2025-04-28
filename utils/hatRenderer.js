@@ -47,14 +47,27 @@ export const validateHatRendering = (hatId, hats, unlockedHats) => {
     console.log(`Attempting to load hat image for: ${hatId}`)
   
     try {
-      // Currently we only have CHat1 implemented with an actual image
-      if (hatId === "CHat1") {
-        return require("../assets/hats/CHat1.png")
+      // Map hat IDs to their corresponding image files
+      switch (hatId) {
+        case "CHat1":
+          return require("../assets/hats/CHat1.png")
+        case "CHat2":
+          return require("../assets/hats/CHat2.png")
+        // Add cases for other hats as they become available
+        default:
+          console.warn(`No specific image found for hat ${hatId}, using fallback`)
+          // For hats without specific images yet, return a fallback based on hat type
+          if (hatId.startsWith("CHat")) {
+            // Try to use CHat1 as fallback for currency hats
+            return require("../assets/hats/CHat1.png")
+          } else if (hatId.startsWith("AHat")) {
+            // For advertisement hats, use CHat2 as temporary fallback
+            return require("../assets/hats/CHat2.png")
+          } else {
+            // For all other hats (planet hats, etc.), use CHat1 as fallback
+            return require("../assets/hats/CHat1.png")
+          }
       }
-  
-      // For other hats, we'll use CHat1 as a placeholder until proper assets are added
-      // This ensures something is displayed rather than nothing
-      return require("../assets/hats/CHat1.png")
     } catch (error) {
       console.error(`Failed to load hat image for ${hatId}:`, error)
   

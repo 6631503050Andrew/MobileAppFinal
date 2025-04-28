@@ -17,21 +17,7 @@ import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
 import { memo, useCallback, useState, useEffect } from "react"
 import { getRarityColor } from "../data/hats"
-
-// Helper function to get hat image source - consistent with GameScreen
-const getHatImage = (hatId) => {
-  // Currently we only have CHat1 implemented
-  if (hatId === "CHat1") {
-    try {
-      return require("../assets/hats/CHat1.png")
-    } catch (error) {
-      console.error("Failed to load hat image:", error)
-    }
-  }
-
-  // For debugging - return a visible placeholder for other hats
-  return require("../assets/hats/CHat1.png")
-}
+import { getHatImageSource } from "../utils/hatrenderer"
 
 // Create a memoized upgrade item component
 const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
@@ -145,6 +131,7 @@ const ChestItem = memo(({ type, onOpen, disabled, cooldownText, cost }) => {
 const HatItem = memo(({ hat, isUnlocked, isEquipped, onToggleEquip }) => {
   const hatData = hat
   const rarityColor = getRarityColor(hatData.rarity)
+  const [imageError, setImageError] = useState(false)
 
   return (
     <TouchableOpacity
@@ -160,9 +147,19 @@ const HatItem = memo(({ hat, isUnlocked, isEquipped, onToggleEquip }) => {
     >
       <View style={styles.hatImageContainer}>
         {isUnlocked ? (
-          <Image source={getHatImage(hat.id)} style={styles.hatItemImage} resizeMode="contain" />
+          <Image
+            source={getHatImageSource(hat.id)}
+            style={styles.hatItemImage}
+            resizeMode="contain"
+            onError={() => setImageError(true)}
+          />
         ) : (
           <Ionicons name="lock-closed" size={24} color="#64748b" />
+        )}
+        {imageError && isUnlocked && (
+          <View style={styles.imageErrorIndicator}>
+            <Text style={styles.imageErrorText}>!</Text>
+          </View>
         )}
       </View>
       <Text style={[styles.hatName, !isUnlocked && styles.hatNameLocked]}>{hatData.name}</Text>
@@ -454,7 +451,11 @@ export default function UpgradesScreen() {
                     { borderColor: getRarityColor(hats[chestResult.hat].rarity) },
                   ]}
                 >
-                  <Image source={getHatImage(chestResult.hat)} style={styles.hatResultImage} resizeMode="contain" />
+                  <Image
+                    source={getHatImageSource(chestResult.hat)}
+                    style={styles.hatResultImage}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text style={styles.hatResultName}>{hats[chestResult.hat].name}</Text>
                 <Text style={[styles.hatResultRarity, { color: getRarityColor(hats[chestResult.hat].rarity) }]}>
@@ -705,11 +706,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
+    position: "relative",
   },
   hatItemImage: {
     width: 80,
     height: 40,
     resizeMode: "contain",
+  },
+  imageErrorIndicator: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#ef4444",
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageErrorText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "bold",
   },
   hatName: {
     fontSize: 14,

@@ -16,6 +16,7 @@ import {
 } from "react-native"
 import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
+import { getHatImageSource } from "../utils/hatrenderer"
 
 // Optimization: Use a constant for animation configurations
 const ANIMATION_CONFIG = {
@@ -24,23 +25,6 @@ const ANIMATION_CONFIG = {
   BOUNCE_DURATION_MAX: 150,
   SCALE_MIN: 0.92,
   SCALE_MAX: 0.96,
-}
-
-// Helper function to get hat image source
-const getHatImage = (hatId) => {
-  console.log(`Loading hat image for: ${hatId}`)
-
-  // Currently we only have CHat1 implemented
-  if (hatId === "CHat1") {
-    try {
-      return require("../assets/hats/CHat1.png")
-    } catch (error) {
-      console.error("Failed to load hat image:", error)
-    }
-  }
-
-  // For debugging - return a visible placeholder for other hats
-  return require("../assets/hats/CHat1.png")
 }
 
 // Declare __DEV__ if it's not already defined (e.g., in a testing environment)
@@ -65,6 +49,7 @@ export default function GameScreen() {
   const [clickEffects, setClickEffects] = useState([])
   const [isPressed, setIsPressed] = useState(false)
   const [hatLoaded, setHatLoaded] = useState(false)
+  const [hatError, setHatError] = useState(null)
 
   // Critical fix: Improved currency display system
   const [displayCurrency, setDisplayCurrency] = useState(0)
@@ -160,6 +145,15 @@ export default function GameScreen() {
       }
     }
   }, [currency])
+
+  // Reset hat loading state when equipped hat changes
+  useEffect(() => {
+    if (equippedHat) {
+      setHatLoaded(false)
+      setHatError(null)
+      console.log(`Equipped hat changed to: ${equippedHat}`)
+    }
+  }, [equippedHat])
 
   // Debug log to verify component is rendering
   useEffect(() => {
@@ -303,11 +297,13 @@ export default function GameScreen() {
   const onHatLoad = useCallback(() => {
     console.log("Hat image loaded successfully")
     setHatLoaded(true)
+    setHatError(null)
   }, [])
 
   const onHatError = useCallback((error) => {
     console.error("Error loading hat image:", error)
     setHatLoaded(false)
+    setHatError("Failed to load hat image")
   }, [])
 
   if (!isLoaded) {
@@ -383,12 +379,17 @@ export default function GameScreen() {
                 ]}
               >
                 <Image
-                  source={getHatImage(equippedHat)}
+                  source={getHatImageSource(equippedHat)}
                   style={styles.hatImage}
                   resizeMode="contain"
                   onLoad={onHatLoad}
                   onError={onHatError}
                 />
+                {__DEV__ && hatError && (
+                  <View style={styles.hatErrorBadge}>
+                    <Text style={styles.hatErrorText}>!</Text>
+                  </View>
+                )}
               </Animated.View>
             )}
 
@@ -435,6 +436,7 @@ export default function GameScreen() {
           <View style={styles.debugInfo}>
             <Text style={styles.debugText}>Hat: {equippedHat}</Text>
             <Text style={styles.debugText}>Loaded: {hatLoaded ? "Yes" : "No"}</Text>
+            {hatError && <Text style={[styles.debugText, styles.errorText]}>{hatError}</Text>}
           </View>
         )}
       </View>
@@ -579,6 +581,22 @@ const styles = StyleSheet.create({
     width: 120,
     height: 60,
     resizeMode: "contain",
+  },
+  hatErrorBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#ef4444",
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  hatErrorText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   clickEffect: {
     position: "absolute",
