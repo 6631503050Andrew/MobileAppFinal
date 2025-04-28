@@ -14,15 +14,16 @@ import UpgradesScreen from "./screens/UpgradesScreen"
 import StatsScreen from "./screens/StatsScreen"
 import SettingsScreen from "./screens/SettingsScreen"
 
-// Ignore specific warnings
+// Ignore specific warnings - updated for SDK 52
 LogBox.ignoreLogs([
   "Non-serializable values were found in the navigation state",
   "VirtualizedLists should never be nested",
+  // Add any new SDK 52 specific warnings here if they appear
 ])
 
 const Tab = createBottomTabNavigator()
 
-// Error boundary component
+// Error boundary component updated for React 18
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null }
 
@@ -51,7 +52,7 @@ class ErrorBoundary extends React.Component {
 
 export default function App() {
   useEffect(() => {
-    console.log("App initialized")
+    console.log("App initialized with Expo SDK 52.0.0")
   }, [])
 
   return (

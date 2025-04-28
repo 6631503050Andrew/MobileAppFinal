@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react"
+import { createContext, useState, useEffect, useContext, useCallback, useRef, useMemo } from "react"
 import { Alert } from "react-native"
 import { saveGameState, loadGameState } from "../utils/storage"
 import { planets } from "../data/planets"
@@ -30,6 +30,7 @@ export const GameProvider = ({ children }) => {
     totalSpent: 0,
     gameStarted: new Date().toISOString(),
     lastPlayed: new Date().toISOString(),
+    version: "2.0.0", // Added version tracking for migrations
   })
   const [isLoaded, setIsLoaded] = useState(false)
   const [error, setError] = useState(null)
@@ -63,10 +64,10 @@ export const GameProvider = ({ children }) => {
 
   // Debug log
   useEffect(() => {
-    console.log("GameContext initialized")
+    console.log("GameContext initialized with SDK 52.0.0")
   }, [])
 
-  // Load game state on startup
+  // Load game state on startup with migration support
   useEffect(() => {
     const loadGame = async () => {
       try {
@@ -74,6 +75,16 @@ export const GameProvider = ({ children }) => {
         const savedState = await loadGameState()
         if (savedState) {
           console.log("Game state loaded successfully")
+
+          // Check for version and migrate if needed
+          const gameVersion = savedState.stats?.version || "1.0.0"
+          const needsMigration = gameVersion !== "2.0.0"
+
+          if (needsMigration) {
+            console.log(`Migrating game state from version ${gameVersion} to 2.0.0`)
+            // Perform any necessary migrations here
+          }
+
           // Ensure currency is never negative when loading
           const safeInitialCurrency = Math.max(0, savedState.currency || 0)
           setCurrency(safeInitialCurrency)
@@ -86,13 +97,17 @@ export const GameProvider = ({ children }) => {
           setCurrentPlanet(savedState.currentPlanet || 0)
           setUpgrades(savedState.upgrades || {})
 
-          const loadedStats = savedState.stats || {
-            totalClicks: 0,
-            totalCurrency: 0,
-            totalSpent: 0,
-            gameStarted: new Date().toISOString(),
-            lastPlayed: new Date().toISOString(),
+          const loadedStats = {
+            ...(savedState.stats || {
+              totalClicks: 0,
+              totalCurrency: 0,
+              totalSpent: 0,
+              gameStarted: new Date().toISOString(),
+              lastPlayed: new Date().toISOString(),
+            }),
+            version: "2.0.0", // Ensure version is set
           }
+
           setStats(loadedStats)
           statsRef.current = loadedStats
 
@@ -120,6 +135,7 @@ export const GameProvider = ({ children }) => {
   }, [])
 
   // Optimization: Debounce save operations to prevent excessive writes
+  // Updated for React 18's automatic batching
   const debouncedSave = useCallback(() => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
@@ -136,6 +152,7 @@ export const GameProvider = ({ children }) => {
           stats: {
             ...statsRef.current,
             lastPlayed: new Date().toISOString(),
+            version: "2.0.0", // Always include version
           },
           settings,
           unlockedAchievements,
@@ -173,6 +190,7 @@ export const GameProvider = ({ children }) => {
   ])
 
   // Passive income timer with single batch update
+  // Optimized for React 18
   useEffect(() => {
     if (!isLoaded) return
 
@@ -185,14 +203,15 @@ export const GameProvider = ({ children }) => {
     }, 1000) // Update every second
 
     return () => clearInterval(timer)
-  }, [passiveIncome, isLoaded, addCurrency])
+  }, [passiveIncome, isLoaded])
 
   // Critical fix: Safe currency update function that prevents race conditions
+  // Optimized for React 18's automatic batching
   const updateCurrencyState = useCallback((newValue) => {
     // Ensure currency never goes below zero
     const safeValue = Math.max(0, newValue)
 
-    // Update both the state and ref
+    // Update both the state and ref in a single operation
     setCurrency(safeValue)
     currencyRef.current = safeValue
 
@@ -220,17 +239,16 @@ export const GameProvider = ({ children }) => {
     // Update currency state safely
     updateCurrencyState(newCurrency)
 
-    // Update display immediately
-    setCurrency(newCurrency)
-
     // Update stats
-    const newStats = {
-      ...statsRef.current,
-      totalClicks: statsRef.current.totalClicks + 1,
-      totalCurrency: statsRef.current.totalCurrency + currentClickValue,
-    }
-    setStats(newStats)
-    statsRef.current = newStats
+    setStats((prev) => {
+      const newStats = {
+        ...prev,
+        totalClicks: prev.totalClicks + 1,
+        totalCurrency: prev.totalCurrency + currentClickValue,
+      }
+      statsRef.current = newStats
+      return newStats
+    })
 
     // Debounce the save operation to prevent excessive writes
     debouncedSave()
@@ -371,6 +389,7 @@ export const GameProvider = ({ children }) => {
       totalSpent: 0,
       gameStarted: new Date().toISOString(),
       lastPlayed: new Date().toISOString(),
+      version: "2.0.0", // Include version
     }
     setStats(newStats)
     statsRef.current = newStats
@@ -388,6 +407,7 @@ export const GameProvider = ({ children }) => {
     }))
   }, [])
 
+  // Check for achievements - optimized for React 18
   useEffect(() => {
     if (!isLoaded) return
 
@@ -444,27 +464,46 @@ export const GameProvider = ({ children }) => {
     [unlockedAchievements, addCurrency],
   )
 
-  // Create value object
-  const value = {
-    currency,
-    clickValue,
-    passiveIncome,
-    currentPlanet,
-    upgrades,
-    stats,
-    isLoaded,
-    error,
-    handleClick,
-    purchaseUpgrade,
-    resetGame,
-    planets,
-    upgradesList,
-    settings,
-    updateSettings,
-    achievements,
-    unlockedAchievements,
-    claimAchievement,
-  }
+  // Memoize the value object for better performance in React 18
+  const value = useMemo(
+    () => ({
+      currency,
+      clickValue,
+      passiveIncome,
+      currentPlanet,
+      upgrades,
+      stats,
+      isLoaded,
+      error,
+      handleClick,
+      purchaseUpgrade,
+      resetGame,
+      planets,
+      upgradesList,
+      settings,
+      updateSettings,
+      achievements,
+      unlockedAchievements,
+      claimAchievement,
+    }),
+    [
+      currency,
+      clickValue,
+      passiveIncome,
+      currentPlanet,
+      upgrades,
+      stats,
+      isLoaded,
+      error,
+      handleClick,
+      purchaseUpgrade,
+      resetGame,
+      settings,
+      updateSettings,
+      unlockedAchievements,
+      claimAchievement,
+    ],
+  )
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>
 }

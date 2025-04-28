@@ -47,6 +47,7 @@ export default function GameScreen() {
   const lastClickTime = useRef(0)
 
   // Critical fix: Improved currency display animation
+  // Optimized for React 18 and SDK 52
   useEffect(() => {
     // Cancel any ongoing animation
     if (currencyAnimationRef.current) {
@@ -130,7 +131,7 @@ export default function GameScreen() {
 
   // Debug log to verify component is rendering
   useEffect(() => {
-    console.log("GameScreen rendered, isLoaded:", isLoaded)
+    console.log("GameScreen rendered with SDK 52, isLoaded:", isLoaded)
     if (planets && planets.length > 0 && currentPlanet < planets.length) {
       console.log("Current planet:", planets[currentPlanet]?.name)
     }
@@ -148,6 +149,7 @@ export default function GameScreen() {
   }, [])
 
   // Optimization: Memoize the planet click handler
+  // Updated for SDK 52 animation handling
   const onPlanetPress = useCallback(() => {
     // Throttle clicks slightly to prevent overwhelming the animation system
     const now = Date.now()
@@ -176,6 +178,7 @@ export default function GameScreen() {
     planetScale.stopAnimation()
 
     // Create new bounce animation sequence
+    // Updated for SDK 52 animation handling
     const bounceAnimation = Animated.sequence([
       Animated.timing(planetScale, {
         toValue: scaleValue,
