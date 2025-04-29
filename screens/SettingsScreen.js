@@ -18,7 +18,8 @@ export default function SettingsScreen() {
   }
 
   const confirmReset = () => {
-    playSound("error")
+    // Use one of our allowed sounds instead of "error"
+    playSound("click")
 
     Alert.alert(
       "Reset Game",
@@ -27,7 +28,7 @@ export default function SettingsScreen() {
         {
           text: "Cancel",
           style: "cancel",
-          onPress: () => playSound("tabSwitch"),
+          onPress: () => playSound("click"), // Use one of our allowed sounds instead of "tabSwitch"
         },
         {
           text: "Reset",
@@ -43,7 +44,8 @@ export default function SettingsScreen() {
   }
 
   const handleToggleSetting = (setting, value) => {
-    playSound("tabSwitch")
+    // Use one of our allowed sounds instead of "tabSwitch"
+    playSound("click")
     updateSettings({ [setting]: value })
   }
 

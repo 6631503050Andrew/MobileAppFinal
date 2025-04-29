@@ -397,7 +397,8 @@ export const GameProvider = ({ children }) => {
         const upgrade = upgradesList.find((u) => u.id === upgradeId)
         if (!upgrade) {
           console.log("Upgrade not found:", upgradeId)
-          playSound("error")
+          // Use one of our allowed sounds instead of "error"
+          playSound("click")
           return false
         }
 
@@ -409,7 +410,8 @@ export const GameProvider = ({ children }) => {
 
         if (currentCurrency < cost) {
           console.log(`Not enough currency to purchase upgrade ${upgradeId}. Have: ${currentCurrency}, Need: ${cost}`)
-          playSound("error")
+          // Use one of our allowed sounds instead of "error"
+          playSound("click")
           return false
         }
 
@@ -489,8 +491,8 @@ export const GameProvider = ({ children }) => {
   const resetGame = useCallback(() => {
     console.log("Resetting game...")
 
-    // Play sound
-    playSound("error")
+    // Play sound - using one of our allowed sounds
+    playSound("achievement")
 
     // Reset all values safely
     updateCurrencyState(0)
@@ -539,9 +541,8 @@ export const GameProvider = ({ children }) => {
   }, [updateCurrencyState])
 
   const updateSettings = useCallback((newSettings) => {
-    // Play sound for settings change
-    playSound("tabSwitch")
-
+    // Remove the tabSwitch sound reference
+    // Just update settings without playing a sound
     setSettings((prev) => ({
       ...prev,
       ...newSettings,
@@ -618,7 +619,8 @@ export const GameProvider = ({ children }) => {
     // Check if ad chest is available
     if (!chests.advertisement.available) {
       console.log("Advertisement chest is on cooldown")
-      playSound("error")
+      // Use one of our allowed sounds instead of "error"
+      playSound("click")
       return { success: false, message: "Chest is on cooldown" }
     }
 
@@ -631,7 +633,8 @@ export const GameProvider = ({ children }) => {
     // Get a random hat from the advertisement chest
     const hatId = getRandomHat("advertisement")
     if (!hatId) {
-      playSound("error")
+      // Use one of our allowed sounds instead of "error"
+      playSound("click")
       return { success: false, message: "Failed to get a hat" }
     }
 
@@ -667,7 +670,8 @@ export const GameProvider = ({ children }) => {
     const cost = chests.currency.nextCost
 
     if (currencyRef.current < cost) {
-      playSound("error")
+      // Use one of our allowed sounds instead of "error"
+      playSound("click")
       return { success: false, message: `Not enough stardust. Need ${cost}.` }
     }
 
@@ -725,7 +729,8 @@ export const GameProvider = ({ children }) => {
   const openPlanetChest = useCallback(() => {
     // Check if there are unopened planet chests
     if (chests.planet.unopened <= 0) {
-      playSound("error")
+      // Use one of our allowed sounds instead of "error"
+      playSound("click")
       return { success: false, message: "No planet chests available" }
     }
 
@@ -774,8 +779,8 @@ export const GameProvider = ({ children }) => {
     (hatId) => {
       console.log("Toggling hat:", hatId, "Current equipped hat:", equippedHat)
 
-      // Play equip sound
-      playSound("equipHat")
+      // Play sound - using one of our allowed sounds
+      playSound("click")
 
       // If the hat is already equipped, unequip it
       if (equippedHat === hatId) {
@@ -787,7 +792,8 @@ export const GameProvider = ({ children }) => {
       // Check if the hat is unlocked
       if (!unlockedHats[hatId] || !unlockedHats[hatId].unlocked) {
         console.log("Hat not unlocked:", hatId)
-        playSound("error")
+        // Use one of our allowed sounds instead of "error"
+        playSound("click")
         return { equipped: false, hatId: null, error: "Hat not unlocked" }
       }
 

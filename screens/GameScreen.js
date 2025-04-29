@@ -19,7 +19,7 @@ import { formatNumber } from "../utils/formatters"
 import { getHatImageSource } from "../utils/hatrenderer"
 import { Audio } from "expo-av"
 
-// Import all sound files statically
+// Import only the required sound files
 import clickSound from "../assets/sounds/click.mp3"
 import purchaseSound from "../assets/sounds/purchase.mp3"
 import achievementSound from "../assets/sounds/achievement.mp3"
@@ -59,15 +59,12 @@ export const preloadSounds = async () => {
   try {
     console.log("Preloading sound effects...")
 
-    // Define sounds to preload
+    // Define only the required sounds to preload
     const soundsToLoad = {
       click: clickSound,
       purchase: purchaseSound,
-      error: errorSound,
       achievement: achievementSound,
       chestOpen: chestOpenSound,
-      equipHat: equipHatSound,
-      tabSwitch: tabSwitchSound,
     }
 
     // Load each sound into cache
@@ -82,7 +79,7 @@ export const preloadSounds = async () => {
     console.log("Sound preloading complete")
     return true
   } catch (error) {
-    console.error("Error preloading sounds:", error)
+    console.error("Failed to load sound effects:", error)
     return false
   }
 }

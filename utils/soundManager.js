@@ -18,10 +18,10 @@ export const updateSoundSettings = (settings) => {
 }
 
 // Import only the available sound files
-import clickSound from "../assets/sounds/click.mp3";
-import purchaseSound from "../assets/sounds/purchase.mp3";
-import achievementSound from "../assets/sounds/achievement.mp3";
-import chestOpenSound from "../assets/sounds/chest_open.mp3";
+import clickSound from "../assets/sounds/click.mp3"
+import purchaseSound from "../assets/sounds/purchase.mp3"
+import achievementSound from "../assets/sounds/achievement.mp3"
+import chestOpenSound from "../assets/sounds/chest_open.mp3"
 
 // Preload sounds for better performance
 export const preloadSounds = async () => {
@@ -58,26 +58,26 @@ export const playSound = async (soundName, volume = 0.5) => {
   try {
     // Check if sound is enabled in settings
     if (!soundSettings.soundEnabled) {
-      return;
+      return
     }
 
-    console.log(`Attempting to play sound: ${soundName}`);
+    console.log(`Attempting to play sound: ${soundName}`)
 
     // Get sound from cache
-    const sound = soundCache[soundName];
+    const sound = soundCache[soundName]
 
     if (!sound) {
-      console.error(`Sound "${soundName}" not preloaded`);
-      return;
+      console.error(`Sound "${soundName}" not preloaded`)
+      return
     }
 
     // Reset sound to beginning (in case it was played before)
-    await sound.setPositionAsync(0);
-    await sound.setVolumeAsync(volume);
-    await sound.playAsync();
-    console.log(`Sound played: ${soundName}`);
+    await sound.setPositionAsync(0)
+    await sound.setVolumeAsync(volume)
+    await sound.playAsync()
+    console.log(`Sound played: ${soundName}`)
   } catch (error) {
-    console.error(`Error playing sound "${soundName}":`, error);
+    console.error(`Error playing sound "${soundName}":`, error)
   }
 }
 

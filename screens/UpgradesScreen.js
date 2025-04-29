@@ -151,7 +151,8 @@ const HatItem = memo(({ hat, isUnlocked, isEquipped, onToggleEquip }) => {
 
   const handleToggleEquip = () => {
     if (!isUnlocked) {
-      playSound("error")
+      // Use one of our allowed sounds instead of "error"
+      playSound("click")
       return
     }
     onToggleEquip()
@@ -279,7 +280,8 @@ export default function UpgradesScreen() {
       } else {
         // Could show an error message here
         console.log(result.message)
-        playSound("error")
+        // Use one of our allowed sounds instead of "error"
+        playSound("click")
       }
     },
     [openAdChest, openCurrencyChest, openPlanetChest],
@@ -298,7 +300,8 @@ export default function UpgradesScreen() {
   const handleTabSwitch = useCallback(
     (tab) => {
       if (tab !== activeTab) {
-        playSound("tabSwitch")
+        // Use one of our allowed sounds instead of "tabSwitch"
+        playSound("click")
         setActiveTab(tab)
       }
     },
@@ -506,7 +509,8 @@ export default function UpgradesScreen() {
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
-                  playSound("tabSwitch")
+                  // Use one of our allowed sounds instead of "tabSwitch"
+                  playSound("click")
                   setChestModalVisible(false)
                 }}
               >
@@ -518,7 +522,8 @@ export default function UpgradesScreen() {
                   style={[styles.modalButton, styles.equipButton]}
                   onPress={() => {
                     console.log("Equipping hat from modal:", chestResult.hat)
-                    playSound("equipHat")
+                    // Use one of our allowed sounds instead of "equipHat"
+                    playSound("click")
                     const result = toggleEquipHat(chestResult.hat)
                     console.log("Equip result:", result)
                     setChestModalVisible(false)
