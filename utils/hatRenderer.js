@@ -43,41 +43,76 @@ export const validateHatRendering = (hatId, hats, unlockedHats) => {
    * @returns {any} - The image source or null if not available
    */
   export const getHatImageSource = (hatId) => {
-    // For debugging
-    console.log(`Attempting to load hat image for: ${hatId}`)
-  
     try {
       // Map hat IDs to their corresponding image files
       switch (hatId) {
+        case "AHat1":
+          return require("../assets/hats/AHat1.png");
+        case "AHat2":
+          return require("../assets/hats/AHat2.png");
+        case "AHat3":
+          return require("../assets/hats/AHat3.png");
+        case "AHat4":
+          return require("../assets/hats/AHat4.png");
+        case "AHat5":
+          return require("../assets/hats/AHat5.png");
+        case "AHat6":
+          return require("../assets/hats/AHat6.png");
+        case "AHat7":
+          return require("../assets/hats/AHat7.png");
+        case "AHat8":
+          return require("../assets/hats/AHat8.png");
+        case "AHat9":
+          return require("../assets/hats/AHat9.png");
+        case "AHat10":
+          return require("../assets/hats/AHat10.png");
         case "CHat1":
-          return require("../assets/hats/CHat1.png")
+          return require("../assets/hats/CHat1.png");
         case "CHat2":
-          return require("../assets/hats/CHat2.png")
-        // Add cases for other hats as they become available
+          return require("../assets/hats/CHat2.png");
+        case "CHat3":
+          return require("../assets/hats/CHat3.png");
+        case "CHat4":
+          return require("../assets/hats/CHat4.png");
+        case "CHat5":
+          return require("../assets/hats/CHat5.png");
+        case "CHat6":
+          return require("../assets/hats/CHat6.png");
+        case "CHat7":
+          return require("../assets/hats/CHat7.png");
+        case "CHat8":
+          return require("../assets/hats/CHat8.png");
+        case "CHat9":
+          return require("../assets/hats/CHat9.png");
+        case "CHat10":
+          return require("../assets/hats/CHat10.png");
+        case "mercuryHat":
+          return require("../assets/hats/MercuryHat.png");
+        case "venusHat":
+          return require("../assets/hats/VenusHat.png");
+        case "earthHat":
+          return require("../assets/hats/EarthHat.png");
+        case "marsHat":
+          return require("../assets/hats/MarsHat.png");
+        case "jupiterHat":
+          return require("../assets/hats/JupiterHat.png");
+        case "saturnHat":
+          return require("../assets/hats/SaturnHat.png");
+        case "uranusHat":
+          return require("../assets/hats/UranusHat.png");
+        case "neptuneHat":
+          return require("../assets/hats/NeptuneHat.png");
+        case "plutoHat":
+          return require("../assets/hats/PlutoHat.png");
+        case "sunHat":
+          return require("../assets/hats/SunHat.png");
         default:
-          console.warn(`No specific image found for hat ${hatId}, using fallback`)
-          // For hats without specific images yet, return a fallback based on hat type
-          if (hatId.startsWith("CHat")) {
-            // Try to use CHat1 as fallback for currency hats
-            return require("../assets/hats/CHat1.png")
-          } else if (hatId.startsWith("AHat")) {
-            // For advertisement hats, use CHat2 as temporary fallback
-            return require("../assets/hats/CHat2.png")
-          } else {
-            // For all other hats (planet hats, etc.), use CHat1 as fallback
-            return require("../assets/hats/CHat1.png")
-          }
+          console.warn(`No image source available for hat: ${hatId}`);
+          return null;
       }
     } catch (error) {
-      console.error(`Failed to load hat image for ${hatId}:`, error)
-  
-      // As a fallback, try to return the CHat1 image
-      try {
-        return require("../assets/hats/CHat1.png")
-      } catch (fallbackError) {
-        console.error("Failed to load fallback hat image:", fallbackError)
-        return null
-      }
+      console.error(`Failed to load hat image for ${hatId}:`, error);
+      return null;
     }
   }
   

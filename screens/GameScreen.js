@@ -374,7 +374,11 @@ export default function GameScreen() {
                 style={[
                   styles.hatContainer,
                   {
-                    transform: [{ scale: hatScale }],
+                    transform: [
+                      { scale: hatScale },
+                      { translateX: hatData.offset.x },
+                      { translateY: hatData.offset.y }
+                    ],
                   },
                 ]}
               >
@@ -434,8 +438,6 @@ export default function GameScreen() {
         {/* Debug info for hat rendering */}
         {__DEV__ && equippedHat && (
           <View style={styles.debugInfo}>
-            <Text style={styles.debugText}>Hat: {equippedHat}</Text>
-            <Text style={styles.debugText}>Loaded: {hatLoaded ? "Yes" : "No"}</Text>
             {hatError && <Text style={[styles.debugText, styles.errorText]}>{hatError}</Text>}
           </View>
         )}
