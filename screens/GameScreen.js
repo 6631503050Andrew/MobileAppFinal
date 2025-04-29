@@ -16,7 +16,7 @@ import {
 } from "react-native"
 import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
-import { getHatImageSource } from "../utils/hatrenderer"
+import { getHatImageSource } from "../utils/hatRenderer"
 import { Audio } from "expo-av"
 
 // Import only the required sound files

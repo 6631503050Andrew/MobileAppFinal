@@ -17,7 +17,7 @@ import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
 import { memo, useCallback, useState, useEffect, useMemo } from "react"
 import { getRarityColor } from "../data/hats"
-import { getHatImageSource } from "../utils/hatrenderer"
+import { getHatImageSource } from "../utils/hatRenderer"
 import { playSound } from "../utils/soundManager"
 import { createGetItemLayout } from "../utils/performanceOptimizer"
 
@@ -254,37 +254,36 @@ export default function UpgradesScreen() {
     }
   }, [chests.advertisement])
 
-  // Handle chest opening
-  const handleOpenChest = useCallback(
-    (chestType) => {
-      console.log(`Attempting to open ${chestType} chest`)
-      let result
+  // Define handleOpenChest outside of useCallback
+  const handleOpenChest = (chestType) => {
+    console.log(`Attempting to open ${chestType} chest`)
+    let result
 
-      switch (chestType) {
-        case "advertisement":
-          result = openAdChest()
-          break
-        case "currency":
-          result = openCurrencyChest()
-          break
-        case "planet":
-          result = openPlanetChest()
-          break
-        default:
-          return
-      }
+    switch (chestType) {
+      case "advertisement":
+        result = openAdChest()
+        break
+      case "currency":
+        result = openCurrencyChest()
+        break
+      case "planet":
+        result = openPlanetChest()
+        break
+      default:
+        return
+    }
 
-      console.log("Chest opening result:", result)
-      if (result.success) {
-        setChestResult(result)
-        setChestModalVisible(true)
-      } else {
-        console.log(result.message)
-        playSound("click")
-      }
-    },
-    [openAdChest, openCurrencyChest, openPlanetChest],
-  )
+    console.log("Chest opening result:", result)
+    if (result.success) {
+      setChestResult(result)
+      setChestModalVisible(true)
+    } else {
+      console.log(result.message)
+      playSound("click")
+    }
+  }
+
+  const memoizedHandleOpenChest = useCallback(handleOpenChest, [openAdChest, openCurrencyChest, openPlanetChest])
 
   // Handle hat equipping
   const handleToggleEquipHat = useCallback(
@@ -440,7 +439,7 @@ export default function UpgradesScreen() {
           {/* Advertisement Chest */}
           <ChestItem
             type="advertisement"
-            onOpen={() => handleOpenChest("advertisement")}
+            onOpen={() => memoizedHandleOpenChest("advertisement")}
             disabled={!chests.advertisement.available}
             cooldownText={adCooldownText}
           />
@@ -448,13 +447,17 @@ export default function UpgradesScreen() {
           {/* Currency Chest */}
           <ChestItem
             type="currency"
-            onOpen={() => handleOpenChest("currency")}
+            onOpen={() => memoizedHandleOpenChest("currency")}
             disabled={currency < chests.currency.nextCost}
             cost={chests.currency.nextCost}
           />
 
           {/* Planet Chest */}
-          <ChestItem type="planet" onOpen={() => handleOpenChest("planet")} disabled={chests.planet.unopened <= 0} />
+          <ChestItem
+            type="planet"
+            onOpen={() => memoizedHandleOpenChest("planet")}
+            disabled={chests.planet.unopened <= 0}
+          />
 
           <Text style={styles.chestInfoText}>Unlock chests to collect hats for your planets!</Text>
         </ScrollView>
