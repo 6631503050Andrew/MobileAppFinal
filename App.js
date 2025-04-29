@@ -1,18 +1,20 @@
 "use client"
 
 import "react-native-gesture-handler"
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { NavigationContainer } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaProvider } from "react-native-safe-area-context"
-import { LogBox, Text, View } from "react-native"
+import { LogBox, Text, View, ActivityIndicator } from "react-native"
 import { GameProvider } from "./context/GameContext"
 import GameScreen from "./screens/GameScreen"
 import UpgradesScreen from "./screens/UpgradesScreen"
 import StatsScreen from "./screens/StatsScreen"
 import SettingsScreen from "./screens/SettingsScreen"
+import { preloadSounds, unloadSounds } from "./utils/soundManager"
+import { Audio } from "expo-av"
 
 // Ignore specific warnings - updated for SDK 52
 LogBox.ignoreLogs([
@@ -59,9 +61,61 @@ class ErrorBoundary extends React.Component {
 }
 
 export default function App() {
+  const [soundsLoaded, setSoundsLoaded] = useState(false)
+  const [audioPermission, setAudioPermission] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
   useEffect(() => {
     console.log("App initialized with Expo SDK 52.0.0")
+
+    // Request audio permissions and initialize audio
+    const setupAudio = async () => {
+      try {
+        console.log("Setting up audio...")
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+        })
+        setAudioPermission(true)
+        console.log("Audio setup complete")
+      } catch (error) {
+        console.error("Error setting up audio:", error)
+        setAudioPermission(false)
+      }
+    }
+
+    // Preload sound effects when the app starts
+    const loadSounds = async () => {
+      try {
+        await setupAudio()
+        const success = await preloadSounds()
+        setSoundsLoaded(success)
+        console.log("Sound effects loaded:", success)
+      } catch (error) {
+        console.error("Failed to load sound effects:", error)
+        setSoundsLoaded(false)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadSounds()
+
+    // Clean up sounds when the app is closed
+    return () => {
+      unloadSounds()
+    }
   }, [])
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0f172a" }}>
+        <ActivityIndicator size="large" color="#8c5eff" />
+        <Text style={{ color: "#fff", marginTop: 20 }}>Loading game resources...</Text>
+      </View>
+    )
+  }
 
   return (
     <ErrorBoundary>

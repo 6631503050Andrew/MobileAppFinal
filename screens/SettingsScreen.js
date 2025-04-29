@@ -1,16 +1,12 @@
 "use client"
-
-import { useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, ScrollView, ActivityIndicator } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import { useGame } from "../context/GameContext"
+import { playSound } from "../utils/soundManager"
 
 export default function SettingsScreen() {
   const { resetGame, isLoaded, settings, updateSettings } = useGame()
-  const [soundEnabled, setSoundEnabled] = useState(true)
-  const [vibrationEnabled, setVibrationEnabled] = useState(true)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
 
   if (!isLoaded) {
     return (
@@ -22,6 +18,8 @@ export default function SettingsScreen() {
   }
 
   const confirmReset = () => {
+    playSound("error")
+
     Alert.alert(
       "Reset Game",
       "Are you sure you want to reset your game? All progress will be lost.",
@@ -29,6 +27,7 @@ export default function SettingsScreen() {
         {
           text: "Cancel",
           style: "cancel",
+          onPress: () => playSound("tabSwitch"),
         },
         {
           text: "Reset",
@@ -41,6 +40,11 @@ export default function SettingsScreen() {
       ],
       { cancelable: true },
     )
+  }
+
+  const handleToggleSetting = (setting, value) => {
+    playSound("tabSwitch")
+    updateSettings({ [setting]: value })
   }
 
   return (
@@ -56,7 +60,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.soundEnabled}
-              onValueChange={(value) => updateSettings({ soundEnabled: value })}
+              onValueChange={(value) => handleToggleSetting("soundEnabled", value)}
               trackColor={{ false: "#334155", true: "#3b82f6" }}
               thumbColor={settings.soundEnabled ? "#60a5fa" : "#94a3b8"}
             />
@@ -69,7 +73,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.vibrationEnabled}
-              onValueChange={(value) => updateSettings({ vibrationEnabled: value })}
+              onValueChange={(value) => handleToggleSetting("vibrationEnabled", value)}
               trackColor={{ false: "#334155", true: "#3b82f6" }}
               thumbColor={settings.vibrationEnabled ? "#60a5fa" : "#94a3b8"}
             />
@@ -82,7 +86,7 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={settings.notificationsEnabled}
-              onValueChange={(value) => updateSettings({ notificationsEnabled: value })}
+              onValueChange={(value) => handleToggleSetting("notificationsEnabled", value)}
               trackColor={{ false: "#334155", true: "#3b82f6" }}
               thumbColor={settings.notificationsEnabled ? "#60a5fa" : "#94a3b8"}
             />
@@ -118,6 +122,52 @@ export default function SettingsScreen() {
           <View style={styles.aboutRow}>
             <Text style={styles.aboutLabel}>Contact</Text>
             <Text style={styles.aboutValue}>support@spaceclicker.com</Text>
+          </View>
+        </View>
+
+        <View style={styles.settingsCard}>
+          <Text style={styles.cardTitle}>Sound Debug</Text>
+
+          <View style={styles.debugButtonsContainer}>
+            <TouchableOpacity
+              style={styles.debugButton}
+              onPress={() => {
+                console.log("Testing click sound")
+                playSound("click", 1.0)
+              }}
+            >
+              <Text style={styles.debugButtonText}>Test Click</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.debugButton}
+              onPress={() => {
+                console.log("Testing purchase sound")
+                playSound("purchase", 1.0)
+              }}
+            >
+              <Text style={styles.debugButtonText}>Test Purchase</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.debugButton}
+              onPress={() => {
+                console.log("Testing achievement sound")
+                playSound("achievement", 1.0)
+              }}
+            >
+              <Text style={styles.debugButtonText}>Test Achievement</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.debugButton}
+              onPress={() => {
+                console.log("Testing chest open sound")
+                playSound("chestOpen", 1.0)
+              }}
+            >
+              <Text style={styles.debugButtonText}>Test Chest</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -216,5 +266,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
     fontWeight: "bold",
+  },
+  debugButtonsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  debugButton: {
+    backgroundColor: "#3b82f6",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    width: "48%",
+  },
+  debugButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 })

@@ -1,29 +1,44 @@
 {
   "expo": {
-    "name": "MobileAppFinal",
-    "slug": "MobileAppFinal",
+    "name": "Space Clicker",
+    "slug": "space-clicker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.spaceclicker.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
-      }
+      },
+      "package": "com.spaceclicker.app",
+      "permissions": ["VIBRATE"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": false
+        }
+      ]
+    ],
     "sdkVersion": "52.0.0"
   }
 }

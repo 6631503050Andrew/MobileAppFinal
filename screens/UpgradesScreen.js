@@ -18,6 +18,7 @@ import { formatNumber } from "../utils/formatters"
 import { memo, useCallback, useState, useEffect } from "react"
 import { getRarityColor } from "../data/hats"
 import { getHatImageSource } from "../utils/hatrenderer"
+import { playSound } from "../utils/soundManager"
 
 // Create a memoized upgrade item component
 const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
@@ -32,6 +33,13 @@ const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
 
     // Set purchasing state to prevent multiple rapid clicks
     setIsPurchasing(true)
+
+    // Play sound based on affordability
+    if (canAfford) {
+      playSound("purchase")
+    } else {
+      playSound("error")
+    }
 
     // Attempt purchase
     onPurchase(item.id)
@@ -109,10 +117,18 @@ const ChestItem = memo(({ type, onOpen, disabled, cooldownText, cost }) => {
     }
   }
 
+  const handleOpen = () => {
+    if (disabled) {
+      playSound("error")
+      return
+    }
+    onOpen()
+  }
+
   return (
     <TouchableOpacity
       style={[styles.chestItem, { borderColor: getChestColor() }, disabled && styles.chestItemDisabled]}
-      onPress={onOpen}
+      onPress={handleOpen}
       disabled={disabled}
       activeOpacity={0.7}
     >
@@ -133,6 +149,14 @@ const HatItem = memo(({ hat, isUnlocked, isEquipped, onToggleEquip }) => {
   const rarityColor = getRarityColor(hatData.rarity)
   const [imageError, setImageError] = useState(false)
 
+  const handleToggleEquip = () => {
+    if (!isUnlocked) {
+      playSound("error")
+      return
+    }
+    onToggleEquip()
+  }
+
   return (
     <TouchableOpacity
       style={[
@@ -141,7 +165,7 @@ const HatItem = memo(({ hat, isUnlocked, isEquipped, onToggleEquip }) => {
         isEquipped && styles.hatItemEquipped,
         !isUnlocked && styles.hatItemLocked,
       ]}
-      onPress={onToggleEquip}
+      onPress={handleToggleEquip}
       disabled={!isUnlocked}
       activeOpacity={0.7}
     >
@@ -255,6 +279,7 @@ export default function UpgradesScreen() {
       } else {
         // Could show an error message here
         console.log(result.message)
+        playSound("error")
       }
     },
     [openAdChest, openCurrencyChest, openPlanetChest],
@@ -267,6 +292,17 @@ export default function UpgradesScreen() {
       toggleEquipHat(hatId)
     },
     [toggleEquipHat],
+  )
+
+  // Handle tab switching with sound
+  const handleTabSwitch = useCallback(
+    (tab) => {
+      if (tab !== activeTab) {
+        playSound("tabSwitch")
+        setActiveTab(tab)
+      }
+    },
+    [activeTab],
   )
 
   if (!isLoaded) {
@@ -340,19 +376,19 @@ export default function UpgradesScreen() {
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === "upgrades" && styles.activeTabButton]}
-          onPress={() => setActiveTab("upgrades")}
+          onPress={() => handleTabSwitch("upgrades")}
         >
           <Text style={[styles.tabText, activeTab === "upgrades" && styles.activeTabText]}>Upgrades</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === "chests" && styles.activeTabButton]}
-          onPress={() => setActiveTab("chests")}
+          onPress={() => handleTabSwitch("chests")}
         >
           <Text style={[styles.tabText, activeTab === "chests" && styles.activeTabText]}>Chests</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === "hats" && styles.activeTabButton]}
-          onPress={() => setActiveTab("hats")}
+          onPress={() => handleTabSwitch("hats")}
         >
           <Text style={[styles.tabText, activeTab === "hats" && styles.activeTabText]}>Hats</Text>
         </TouchableOpacity>
@@ -467,7 +503,13 @@ export default function UpgradesScreen() {
             <Text style={styles.modalMessage}>{chestResult?.message || "You got a new hat!"}</Text>
 
             <View style={styles.modalButtonsContainer}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => setChestModalVisible(false)}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  playSound("tabSwitch")
+                  setChestModalVisible(false)
+                }}
+              >
                 <Text style={styles.modalButtonText}>Close</Text>
               </TouchableOpacity>
 
@@ -476,6 +518,7 @@ export default function UpgradesScreen() {
                   style={[styles.modalButton, styles.equipButton]}
                   onPress={() => {
                     console.log("Equipping hat from modal:", chestResult.hat)
+                    playSound("equipHat")
                     const result = toggleEquipHat(chestResult.hat)
                     console.log("Equip result:", result)
                     setChestModalVisible(false)
