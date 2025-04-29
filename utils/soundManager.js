@@ -61,7 +61,11 @@ export const playSound = async (soundName, volume = 0.5) => {
       return
     }
 
-    console.log(`Attempting to play sound: ${soundName}`)
+    // Add a check to ensure the sound is preloaded
+    if (!soundCache[soundName]) {
+      console.error(`Sound "${soundName}" not preloaded. Available sounds:`, Object.keys(soundCache));
+      return;
+    }
 
     // Get sound from cache
     const sound = soundCache[soundName]
@@ -75,7 +79,6 @@ export const playSound = async (soundName, volume = 0.5) => {
     await sound.setPositionAsync(0)
     await sound.setVolumeAsync(volume)
     await sound.playAsync()
-    console.log(`Sound played: ${soundName}`)
   } catch (error) {
     console.error(`Error playing sound "${soundName}":`, error)
   }

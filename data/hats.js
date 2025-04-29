@@ -1,16 +1,16 @@
 // Define all the hats that can be collected from chests
 export const hats = {
     // Advertisement chest hats
-    AHat1: { id: "AHat1", name: "Ad Hat 1", rarity: "common", offset: { x: 0, y: 50 } },
-    AHat2: { id: "AHat2", name: "Ad Hat 2", rarity: "common", offset: { x: 0, y: 50 } },
-    AHat3: { id: "AHat3", name: "Ad Hat 3", rarity: "uncommon", offset: { x: 0, y: 50 } },
-    AHat4: { id: "AHat4", name: "Ad Hat 4", rarity: "uncommon", offset: { x: 0, y: 50 } },
-    AHat5: { id: "AHat5", name: "Ad Hat 5", rarity: "rare", offset: { x: 0, y: 50 } },
-    AHat6: { id: "AHat6", name: "Ad Hat 6", rarity: "rare", offset: { x: 0, y: 50 } },
-    AHat7: { id: "AHat7", name: "Ad Hat 7", rarity: "epic", offset: { x: 0, y: 50 } },
-    AHat8: { id: "AHat8", name: "Ad Hat 8", rarity: "epic", offset: { x: 0, y: 50 } },
-    AHat9: { id: "AHat9", name: "Ad Hat 9", rarity: "legendary", offset: { x: 0, y: 50 } },
-    AHat10: { id: "AHat10", name: "Ad Hat 10", rarity: "legendary", offset: { x: 0, y: 50 } },
+    AHat1: { id: "AHat1", name: "Heart", rarity: "common", offset: { x: 0, y: 50 } },
+    AHat2: { id: "AHat2", name: "Arrow", rarity: "common", offset: { x: 0, y: 50 } },
+    AHat3: { id: "AHat3", name: "Poop", rarity: "uncommon", offset: { x: 0, y: 50 } },
+    AHat4: { id: "AHat4", name: "Thinking", rarity: "uncommon", offset: { x: 0, y: 50 } },
+    AHat5: { id: "AHat5", name: "Smiley", rarity: "rare", offset: { x: 0, y: 50 } },
+    AHat6: { id: "AHat6", name: "Egg Plant", rarity: "rare", offset: { x: 0, y: 50 } },
+    AHat7: { id: "AHat7", name: "Lightning", rarity: "epic", offset: { x: 0, y: 50 } },
+    AHat8: { id: "AHat8", name: "Censored", rarity: "epic", offset: { x: 0, y: 50 } },
+    AHat9: { id: "AHat9", name: "Dancing People", rarity: "legendary", offset: { x: 0, y: 50 } },
+    AHat10: { id: "AHat10", name: "BOOM", rarity: "legendary", offset: { x: 0, y: 50 } },
   
     // Currency chest hats
     CHat1: {
@@ -27,14 +27,14 @@ export const hats = {
         offset: { x: 0, y: 50 },
     },
     
-    CHat3: { id: "CHat3", name: "Currency Hat 3", rarity: "uncommon", offset: { x: 0, y: 50 } },
-    CHat4: { id: "CHat4", name: "Currency Hat 4", rarity: "uncommon", offset: { x: 0, y: 50 } },
-    CHat5: { id: "CHat5", name: "Currency Hat 5", rarity: "rare", offset: { x: 0, y: 50 } },
-    CHat6: { id: "CHat6", name: "Currency Hat 6", rarity: "rare", offset: { x: 0, y: 50 } },
-    CHat7: { id: "CHat7", name: "Currency Hat 7", rarity: "epic", offset: { x: 0, y: 50 } },
-    CHat8: { id: "CHat8", name: "Currency Hat 8", rarity: "epic", offset: { x: 0, y: 50 } },
-    CHat9: { id: "CHat9", name: "Currency Hat 9", rarity: "legendary", offset: { x: 0, y: 50 } },
-    CHat10: { id: "CHat10", name: "Currency Hat 10", rarity: "legendary", offset: { x: 0, y: 50 } },
+    CHat3: { id: "CHat3", name: "Duck", rarity: "uncommon", offset: { x: 0, y: 50 } },
+    CHat4: { id: "CHat4", name: "Rain", rarity: "uncommon", offset: { x: 0, y: 50 } },
+    CHat5: { id: "CHat5", name: "Patrick", rarity: "rare", offset: { x: 0, y: 50 } },
+    CHat6: { id: "CHat6", name: "Viking", rarity: "rare", offset: { x: 0, y: 50 } },
+    CHat7: { id: "CHat7", name: "Chef", rarity: "epic", offset: { x: 0, y: 50 } },
+    CHat8: { id: "CHat8", name: "Orange", rarity: "epic", offset: { x: 0, y: 50 } },
+    CHat9: { id: "CHat9", name: "Flower", rarity: "legendary", offset: { x: 0, y: 50 } },
+    CHat10: { id: "CHat10", name: "Halo", rarity: "legendary", offset: { x: 0, y: 50 } },
   
     // Planet chest hats
     mercuryHat: { id: "mercuryHat", name: "Mercury Hat", rarity: "rare", offset: { x: 0, y: 50 } },

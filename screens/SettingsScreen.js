@@ -118,12 +118,12 @@ export default function SettingsScreen() {
 
           <View style={styles.aboutRow}>
             <Text style={styles.aboutLabel}>Developer</Text>
-            <Text style={styles.aboutValue}>Space Clicker Team</Text>
+            <Text style={styles.aboutValue}>Andrew Dicesare</Text>
           </View>
 
           <View style={styles.aboutRow}>
             <Text style={styles.aboutLabel}>Contact</Text>
-            <Text style={styles.aboutValue}>support@spaceclicker.com</Text>
+            <Text style={styles.aboutValue}>6631503050@lamduan.mfu.ac.th</Text>
           </View>
         </View>
 

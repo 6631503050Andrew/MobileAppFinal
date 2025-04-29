@@ -97,27 +97,27 @@ export default function StatsScreen() {
             key={achievement.id}
             style={[
               styles.achievementItem,
-              unlockedAchievements.includes(achievement.id) ? styles.unlockedAchievement : null,
+              unlockedAchievements[achievement.id] ? styles.unlockedAchievement : null,
             ]}
             onPress={() => {
-              if (!unlockedAchievements.includes(achievement.id)) {
+              if (!unlockedAchievements[achievement.id]) {
                 handleClaimAchievement(achievement.id)
                 playSound("achievement")
               }
             }}
-            disabled={unlockedAchievements.includes(achievement.id)}
+            disabled={!!unlockedAchievements[achievement.id]}
           >
             <View style={styles.achievementContent}>
               <Ionicons
                 name={achievement.icon}
                 size={30}
-                color={unlockedAchievements.includes(achievement.id) ? "#feca57" : "#ccc"}
+                color={unlockedAchievements[achievement.id] ? "#feca57" : "#ccc"}
               />
               <View style={styles.achievementText}>
                 <Text
                   style={[
                     styles.achievementTitle,
-                    unlockedAchievements.includes(achievement.id) ? styles.unlockedText : null,
+                    unlockedAchievements[achievement.id] ? styles.unlockedText : null,
                   ]}
                 >
                   {achievement.title}
@@ -125,14 +125,14 @@ export default function StatsScreen() {
                 <Text
                   style={[
                     styles.achievementDescription,
-                    unlockedAchievements.includes(achievement.id) ? styles.unlockedText : null,
+                    unlockedAchievements[achievement.id] ? styles.unlockedText : null,
                   ]}
                 >
                   {achievement.description}
                 </Text>
               </View>
             </View>
-            {!unlockedAchievements.includes(achievement.id) && <Text style={styles.claimButton}>Claim</Text>}
+            {!unlockedAchievements[achievement.id] && <Text style={styles.claimButton}>Claim</Text>}
           </TouchableOpacity>
         ))}
       </View>
