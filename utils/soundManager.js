@@ -1,4 +1,5 @@
 import { Audio } from "expo-av"
+import { Platform } from "react-native"
 
 // Sound effect cache to prevent reloading
 const soundCache = {}
@@ -53,7 +54,7 @@ export const preloadSounds = async () => {
   }
 }
 
-// Play a sound effect
+// Improve cross-platform audio handling
 export const playSound = async (soundName, volume = 0.5) => {
   try {
     // Check if sound is enabled in settings
@@ -63,8 +64,8 @@ export const playSound = async (soundName, volume = 0.5) => {
 
     // Add a check to ensure the sound is preloaded
     if (!soundCache[soundName]) {
-      console.error(`Sound "${soundName}" not preloaded. Available sounds:`, Object.keys(soundCache));
-      return;
+      console.error(`Sound "${soundName}" not preloaded. Available sounds:`, Object.keys(soundCache))
+      return
     }
 
     // Get sound from cache
@@ -75,27 +76,57 @@ export const playSound = async (soundName, volume = 0.5) => {
       return
     }
 
-    // Reset sound to beginning (in case it was played before)
-    await sound.setPositionAsync(0)
-    await sound.setVolumeAsync(volume)
-    await sound.playAsync()
+    // Platform-specific volume adjustments
+    const adjustedVolume = Platform.OS === "android" ? Math.min(volume * 1.2, 1.0) : volume
+
+    try {
+      // Reset sound to beginning (in case it was played before)
+      await sound.setPositionAsync(0)
+      await sound.setVolumeAsync(adjustedVolume)
+
+      // On Android, ensure we don't play too many sounds simultaneously
+      if (Platform.OS === "android") {
+        // Check if the sound is already playing
+        const status = await sound.getStatusAsync()
+        if (status.isPlaying) {
+          // If already playing, just reset position instead of playing again
+          return
+        }
+      }
+
+      await sound.playAsync()
+    } catch (innerError) {
+      // Handle playback errors gracefully
+      console.warn(`Non-critical error playing sound "${soundName}":`, innerError)
+    }
   } catch (error) {
     console.error(`Error playing sound "${soundName}":`, error)
   }
 }
 
-// Clean up sounds when app is closing
+// Improve sound unloading to ensure proper cleanup
 export const unloadSounds = async () => {
   try {
     console.log("Unloading sounds...")
-    for (const [key, sound] of Object.entries(soundCache)) {
+
+    // Create a copy of the keys to avoid modification during iteration
+    const soundKeys = Object.keys(soundCache)
+
+    for (const key of soundKeys) {
       try {
-        await sound.unloadAsync()
-        console.log(`Sound unloaded: ${key}`)
+        const sound = soundCache[key]
+        if (sound) {
+          // Stop the sound before unloading
+          await sound.stopAsync().catch(() => {})
+          await sound.unloadAsync()
+          delete soundCache[key]
+          console.log(`Sound unloaded: ${key}`)
+        }
       } catch (error) {
         console.error(`Error unloading sound ${key}:`, error)
       }
     }
+
     console.log("Sounds unloaded successfully")
   } catch (error) {
     console.error("Error unloading sounds:", error)

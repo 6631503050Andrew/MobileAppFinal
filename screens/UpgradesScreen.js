@@ -15,10 +15,11 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { useGame } from "../context/GameContext"
 import { formatNumber } from "../utils/formatters"
-import { memo, useCallback, useState, useEffect } from "react"
+import { memo, useCallback, useState, useEffect, useMemo } from "react"
 import { getRarityColor } from "../data/hats"
 import { getHatImageSource } from "../utils/hatrenderer"
 import { playSound } from "../utils/soundManager"
+import { createGetItemLayout } from "../utils/performanceOptimizer"
 
 // Create a memoized upgrade item component
 const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
@@ -38,7 +39,7 @@ const UpgradeItem = memo(({ item, currency, currentLevel, onPurchase }) => {
     if (canAfford) {
       playSound("purchase")
     } else {
-      playSound("error")
+      playSound("click")
     }
 
     // Attempt purchase
@@ -119,7 +120,7 @@ const ChestItem = memo(({ type, onOpen, disabled, cooldownText, cost }) => {
 
   const handleOpen = () => {
     if (disabled) {
-      playSound("error")
+      playSound("click")
       return
     }
     onOpen()
@@ -151,7 +152,6 @@ const HatItem = memo(({ hat, isUnlocked, isEquipped, onToggleEquip }) => {
 
   const handleToggleEquip = () => {
     if (!isUnlocked) {
-      // Use one of our allowed sounds instead of "error"
       playSound("click")
       return
     }
@@ -222,6 +222,7 @@ export default function UpgradesScreen() {
   const [chestModalVisible, setChestModalVisible] = useState(false)
   const [chestResult, setChestResult] = useState(null)
   const [adCooldownText, setAdCooldownText] = useState("")
+  const [availableUpgrades, setAvailableUpgrades] = useState([])
 
   // Calculate ad chest cooldown text
   useEffect(() => {
@@ -278,9 +279,7 @@ export default function UpgradesScreen() {
         setChestResult(result)
         setChestModalVisible(true)
       } else {
-        // Could show an error message here
         console.log(result.message)
-        // Use one of our allowed sounds instead of "error"
         playSound("click")
       }
     },
@@ -300,13 +299,37 @@ export default function UpgradesScreen() {
   const handleTabSwitch = useCallback(
     (tab) => {
       if (tab !== activeTab) {
-        // Use one of our allowed sounds instead of "tabSwitch"
         playSound("click")
         setActiveTab(tab)
       }
     },
     [activeTab],
   )
+
+  useEffect(() => {
+    if (isLoaded) {
+      const filteredUpgrades = upgradesList.filter((upgrade) => {
+        const currentLevel = upgrades[upgrade.id] || 0
+
+        // Check if max level reached
+        if (upgrade.maxLevel && currentLevel >= upgrade.maxLevel) {
+          return false
+        }
+
+        // Check if required upgrade is purchased
+        if (upgrade.requiredUpgrade) {
+          const requiredLevel = upgrade.requiredLevel || 1
+          const actualLevel = upgrades[upgrade.requiredUpgrade] || 0
+          if (actualLevel < requiredLevel) {
+            return false
+          }
+        }
+
+        return true
+      })
+      setAvailableUpgrades(filteredUpgrades)
+    }
+  }, [upgradesList, upgrades, isLoaded])
 
   if (!isLoaded) {
     return (
@@ -317,57 +340,48 @@ export default function UpgradesScreen() {
     )
   }
 
-  // Filter available upgrades
-  const availableUpgrades = upgradesList.filter((upgrade) => {
-    const currentLevel = upgrades[upgrade.id] || 0
+  // Optimize list rendering with getItemLayout
+  const getItemLayout = createGetItemLayout(84)
 
-    // Check if max level reached
-    if (upgrade.maxLevel && currentLevel >= upgrade.maxLevel) {
-      return false
-    }
-
-    // Check if required upgrade is purchased
-    if (upgrade.requiredUpgrade) {
-      const requiredLevel = upgrade.requiredLevel || 1
-      const actualLevel = upgrades[upgrade.requiredUpgrade] || 0
-      if (actualLevel < requiredLevel) {
-        return false
-      }
-    }
-
-    return true
-  })
-
-  const handlePurchase = (upgradeId) => {
-    console.log("Attempting to purchase:", upgradeId)
-    const success = purchaseUpgrade(upgradeId)
-    console.log("Purchase success:", success)
-  }
+  const handlePurchase = useCallback(
+    (upgradeId) => {
+      console.log("Attempting to purchase:", upgradeId)
+      const success = purchaseUpgrade(upgradeId)
+      console.log("Purchase success:", success)
+    },
+    [purchaseUpgrade],
+  )
 
   // Replace the renderUpgradeItem function with:
-  const renderUpgradeItem = ({ item }) => {
-    const currentLevel = upgrades[item.id] || 0
-    return <UpgradeItem item={item} currency={currency} currentLevel={currentLevel} onPurchase={handlePurchase} />
-  }
+  const renderUpgradeItem = useCallback(
+    ({ item }) => {
+      const currentLevel = upgrades[item.id] || 0
+      return <UpgradeItem item={item} currency={currency} currentLevel={currentLevel} onPurchase={handlePurchase} />
+    },
+    [currency, upgrades, handlePurchase],
+  )
 
   // Render hat items for collection
-  const renderHatItem = ({ item }) => {
-    const hatId = item.id
-    const isUnlocked = unlockedHats[hatId]?.unlocked || false
-    const isEquipped = equippedHat === hatId
+  const renderHatItem = useCallback(
+    ({ item }) => {
+      const hatId = item.id
+      const isUnlocked = unlockedHats[hatId]?.unlocked || false
+      const isEquipped = equippedHat === hatId
 
-    return (
-      <HatItem
-        hat={item}
-        isUnlocked={isUnlocked}
-        isEquipped={isEquipped}
-        onToggleEquip={() => handleToggleEquipHat(hatId)}
-      />
-    )
-  }
+      return (
+        <HatItem
+          hat={item}
+          isUnlocked={isUnlocked}
+          isEquipped={isEquipped}
+          onToggleEquip={() => handleToggleEquipHat(hatId)}
+        />
+      )
+    },
+    [unlockedHats, equippedHat, handleToggleEquipHat],
+  )
 
-  // Convert hats object to array for FlatList
-  const hatsArray = Object.values(hats)
+  // Convert hats object to array for FlatList - memoized to prevent recreation
+  const hatsArray = useMemo(() => Object.values(hats), [hats])
 
   return (
     <ImageBackground source={require("../assets/space-background.png")} style={styles.container} resizeMode="cover">
@@ -409,11 +423,7 @@ export default function UpgradesScreen() {
             maxToRenderPerBatch={5}
             windowSize={3}
             removeClippedSubviews={true}
-            getItemLayout={(data, index) => ({
-              length: 84, // Approximate height of each item
-              offset: 84 * index,
-              index,
-            })}
+            getItemLayout={getItemLayout}
           />
         ) : (
           <View style={styles.emptyContainer}>
@@ -509,7 +519,6 @@ export default function UpgradesScreen() {
               <TouchableOpacity
                 style={styles.modalButton}
                 onPress={() => {
-                  // Use one of our allowed sounds instead of "tabSwitch"
                   playSound("click")
                   setChestModalVisible(false)
                 }}
@@ -522,7 +531,6 @@ export default function UpgradesScreen() {
                   style={[styles.modalButton, styles.equipButton]}
                   onPress={() => {
                     console.log("Equipping hat from modal:", chestResult.hat)
-                    // Use one of our allowed sounds instead of "equipHat"
                     playSound("click")
                     const result = toggleEquipHat(chestResult.hat)
                     console.log("Equip result:", result)

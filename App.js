@@ -15,6 +15,8 @@ import StatsScreen from "./screens/StatsScreen"
 import SettingsScreen from "./screens/SettingsScreen"
 import { preloadSounds, unloadSounds } from "./utils/soundManager"
 import { Audio } from "expo-av"
+// Add ToastNotification provider to the app
+import { ToastProvider } from "./context/ToastContext"
 
 // Ignore specific warnings - updated for SDK 52
 LogBox.ignoreLogs([
@@ -117,56 +119,59 @@ export default function App() {
     )
   }
 
+  // Update the return statement to include ToastProvider
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <GameProvider>
-          <NavigationContainer>
-            <StatusBar style="light" />
-            <Tab.Navigator
-              screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color, size }) => {
-                  let iconName
+        <ToastProvider>
+          <GameProvider>
+            <NavigationContainer>
+              <StatusBar style="light" />
+              <Tab.Navigator
+                screenOptions={({ route }) => ({
+                  tabBarIcon: ({ focused, color, size }) => {
+                    let iconName
 
-                  if (route.name === "Game") {
-                    iconName = focused ? "planet" : "planet-outline"
-                  } else if (route.name === "Upgrades") {
-                    iconName = focused ? "rocket" : "rocket-outline"
-                  } else if (route.name === "Stats") {
-                    iconName = focused ? "stats-chart" : "stats-chart-outline"
-                  } else if (route.name === "Settings") {
-                    iconName = focused ? "settings" : "settings-outline"
-                  }
+                    if (route.name === "Game") {
+                      iconName = focused ? "planet" : "planet-outline"
+                    } else if (route.name === "Upgrades") {
+                      iconName = focused ? "rocket" : "rocket-outline"
+                    } else if (route.name === "Stats") {
+                      iconName = focused ? "stats-chart" : "stats-chart-outline"
+                    } else if (route.name === "Settings") {
+                      iconName = focused ? "settings" : "settings-outline"
+                    }
 
-                  return <Ionicons name={iconName} size={size} color={color} />
-                },
-                tabBarActiveTintColor: "#8c5eff",
-                tabBarInactiveTintColor: "#7f7f7f",
-                tabBarStyle: {
-                  backgroundColor: "#111827",
-                  borderTopColor: "#2d3748",
-                  paddingBottom: 5,
-                  paddingTop: 5,
-                  height: 60,
-                },
-                headerStyle: {
-                  backgroundColor: "#111827",
-                  borderBottomColor: "#2d3748",
-                  borderBottomWidth: 1,
-                },
-                headerTintColor: "#fff",
-                headerTitleStyle: {
-                  fontWeight: "bold",
-                },
-              })}
-            >
-              <Tab.Screen name="Game" component={GameScreen} options={{ title: "Space Clicker" }} />
-              <Tab.Screen name="Upgrades" component={UpgradesScreen} />
-              <Tab.Screen name="Stats" component={StatsScreen} />
-              <Tab.Screen name="Settings" component={SettingsScreen} />
-            </Tab.Navigator>
-          </NavigationContainer>
-        </GameProvider>
+                    return <Ionicons name={iconName} size={size} color={color} />
+                  },
+                  tabBarActiveTintColor: "#8c5eff",
+                  tabBarInactiveTintColor: "#7f7f7f",
+                  tabBarStyle: {
+                    backgroundColor: "#111827",
+                    borderTopColor: "#2d3748",
+                    paddingBottom: 5,
+                    paddingTop: 5,
+                    height: 60,
+                  },
+                  headerStyle: {
+                    backgroundColor: "#111827",
+                    borderBottomColor: "#2d3748",
+                    borderBottomWidth: 1,
+                  },
+                  headerTintColor: "#fff",
+                  headerTitleStyle: {
+                    fontWeight: "bold",
+                  },
+                })}
+              >
+                <Tab.Screen name="Game" component={GameScreen} options={{ title: "Space Clicker" }} />
+                <Tab.Screen name="Upgrades" component={UpgradesScreen} />
+                <Tab.Screen name="Stats" component={StatsScreen} />
+                <Tab.Screen name="Settings" component={SettingsScreen} />
+              </Tab.Navigator>
+            </NavigationContainer>
+          </GameProvider>
+        </ToastProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   )

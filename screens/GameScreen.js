@@ -260,9 +260,19 @@ export default function GameScreen() {
 
   // Cleanup animations on unmount
   useEffect(() => {
+    // Cleanup animations on unmount
     return () => {
+      // Clear all timeouts
       effectTimeouts.current.forEach(clearTimeout)
+
+      // Stop all animations
       animationsInProgress.current.forEach((anim) => anim.stop())
+
+      // Stop scale animations explicitly
+      planetScale.stopAnimation()
+      hatScale.stopAnimation()
+
+      // Clear currency animation timeout
       if (currencyAnimationRef.current) {
         clearTimeout(currencyAnimationRef.current)
       }
@@ -398,6 +408,42 @@ export default function GameScreen() {
     setHatError("Failed to load hat image")
   }, [])
 
+  // Fix hat rendering issues
+  const renderHat = () => {
+    if (!hatData || !equippedHat) return null
+
+    // Get hat image source
+    const hatImageSource = getHatImageSource(equippedHat)
+    if (!hatImageSource) {
+      console.warn(`Could not load hat image for ${equippedHat}`)
+      return null
+    }
+
+    return (
+      <Animated.View
+        style={[
+          styles.hatContainer,
+          {
+            transform: [{ scale: hatScale }, { translateX: hatData.offset.x }, { translateY: hatData.offset.y }],
+          },
+        ]}
+      >
+        <Image
+          source={hatImageSource}
+          style={styles.hatImage}
+          resizeMode="contain"
+          onLoad={onHatLoad}
+          onError={onHatError}
+        />
+        {__DEV__ && hatError && (
+          <View style={styles.hatErrorBadge}>
+            <Text style={styles.hatErrorText}>!</Text>
+          </View>
+        )}
+      </Animated.View>
+    )
+  }
+
   if (!isLoaded) {
     return (
       <View style={styles.loadingContainer}>
@@ -461,33 +507,7 @@ export default function GameScreen() {
           {/* Main interactive area */}
           <View style={styles.interactiveArea}>
             {/* Hat layer - rendered OUTSIDE and BEFORE the planet button to ensure proper layering */}
-            {hatData && equippedHat && (
-              <Animated.View
-                style={[
-                  styles.hatContainer,
-                  {
-                    transform: [
-                      { scale: hatScale },
-                      { translateX: hatData.offset.x },
-                      { translateY: hatData.offset.y },
-                    ],
-                  },
-                ]}
-              >
-                <Image
-                  source={getHatImageSource(equippedHat)}
-                  style={styles.hatImage}
-                  resizeMode="contain"
-                  onLoad={onHatLoad}
-                  onError={onHatError}
-                />
-                {__DEV__ && hatError && (
-                  <View style={styles.hatErrorBadge}>
-                    <Text style={styles.hatErrorText}>!</Text>
-                  </View>
-                )}
-              </Animated.View>
-            )}
+            {renderHat()}
 
             {/* Planet button with click handling */}
             {Platform.OS === "ios" ? (

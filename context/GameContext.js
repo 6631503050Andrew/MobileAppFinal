@@ -590,7 +590,18 @@ export const GameProvider = ({ children }) => {
       if (!achievement) return false
 
       const achievementData = unlockedAchievements[achievementId]
-      if (!achievementData || achievementData.claimed) return false
+
+      // Critical fix: Verify the achievement is actually unlocked before allowing claim
+      if (!achievementData) {
+        console.log(`Achievement ${achievementId} is not unlocked yet`)
+        return false
+      }
+
+      // Check if already claimed
+      if (achievementData.claimed) {
+        console.log(`Achievement ${achievementId} already claimed`)
+        return false
+      }
 
       // Play sound
       playSound("achievement")
