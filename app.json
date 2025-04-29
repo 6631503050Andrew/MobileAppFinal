@@ -15,7 +15,9 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.spaceclicker.app"
@@ -26,7 +28,10 @@
         "backgroundColor": "#000000"
       },
       "package": "com.spaceclicker.app",
-      "permissions": ["VIBRATE"]
+      "permissions": [
+        "VIBRATE",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,6 +44,12 @@
         }
       ]
     ],
-    "sdkVersion": "52.0.0"
+    "sdkVersion": "52.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "9478ba27-d400-4939-b354-b9d90c0070fc"
+      }
+    },
+    "owner": "andrewdicesare2004"
   }
 }
