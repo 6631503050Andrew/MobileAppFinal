@@ -1,26 +1,41 @@
+# Dependencies
 node_modules/
+
+# Expo
 .expo/
+.expo-shared/
+.expo-local/
 dist/
-npm-debug.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
 web-build/
+
+# Build files
+android/
+ios/
+
+# Logs
+npm-debug.*
+*.log
+
+# Environment files
+.env
+.env.local
 
 # macOS
 .DS_Store
 
-# Android build files
-android/app/build/
-android/build/
-android/.gradle/
+# Android signing files
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
 
-# iOS build files
-ios/build/
-ios/Pods/
+# iOS provisioning
+*.mobileprovision
+*.pbxuser
+*.orig.*
+*.xcuserstate
 
-# Expo
-.expo-shared/
+# IDE/Editor
+.vscode/
+.idea/

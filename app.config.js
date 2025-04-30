@@ -1,4 +1,5 @@
-module.exports = {
+export default {
+  expo: {
     name: "Space Clicker",
     slug: "space-clicker",
     version: "1.0.0",
@@ -8,33 +9,40 @@ module.exports = {
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#000000",
+      backgroundColor: "#000000"
     },
     updates: {
-      fallbackToCacheTimeout: 0,
+      fallbackToCacheTimeout: 0
     },
     assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.spaceclicker.app",
+      bundleIdentifier: "com.spaceclicker.app"
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#000000",
+        backgroundColor: "#000000"
       },
       package: "com.spaceclicker.app",
-      permissions: ["VIBRATE", "INTERNET"],
+      permissions: ["VIBRATE", "INTERNET"]
     },
     web: {
-      favicon: "./assets/favicon.png",
+      favicon: "./assets/favicon.png"
     },
-    plugins: ["expo-av"],
+    plugins: [
+      [
+        "expo-av",
+        {
+          microphonePermission: false
+        }
+      ]
+    ],
     extra: {
       eas: {
-        projectId: "9478ba27-d400-4939-b354-b9d90c0070fc",
-      },
+        projectId: "9478ba27-d400-4939-b354-b9d90c0070fc"
+      }
     },
-    owner: "andrewdicesare2004",
+    owner: "andrewdicesare2004"
   }
-  
+};
