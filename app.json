@@ -15,9 +15,7 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.spaceclicker.app"
@@ -29,8 +27,11 @@
       },
       "package": "com.spaceclicker.app",
       "permissions": [
-        "VIBRATE",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "VIBRATE", 
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.INTERNET",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK"
       ]
     },
     "web": {
