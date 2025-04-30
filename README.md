@@ -4,8 +4,8 @@
 **รหัสนักศึกษา (Student ID): 6631503050**  
 **ชื่อแอป (App Name): Space Clicker**  
 **Framework ที่ใช้ (Framework Used):** React Native
-**ลิงก์ GitHub Repository:** [[ใส่ลิงก์ที่นี่ | Insert link here](https://github.com/6631503050Andrew/MobileAppFinal)]  
-**ลิงก์ไฟล์ติดตั้ง (APK/IPA):** [ใส่ลิงก์ที่นี่ | Insert link here]
+**ลิงก์ GitHub Repository:** [[GITHUB LINK](https://github.com/6631503050Andrew/MobileAppFinal)]  
+**ลิงก์ไฟล์ติดตั้ง (APK/IPA):** [[BUILD LINK](https://expo.dev/accounts/andrewdicesare2004/projects/space-clicker/builds/20bc4e6c-cb18-4ad7-b497-2e2fda22f3fa)]
 
 ---
 
