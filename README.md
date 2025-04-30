@@ -156,7 +156,8 @@ Planned/Future Features:
  ![StatsScreen](images/StatsScreen.jpg)
  ![SettingsScreen](images/SettingsScreen.jpg)
 
- https://drive.google.com/drive/folders/1MH1Ooe1450J6gd8YkBEJ8A220eJGkbDf?usp=sharing (Incase images don't show)
+ 
+ [[Images Link Drive]([https://github.com/6631503050Andrew/MobileAppFinal](https://drive.google.com/drive/folders/1MH1Ooe1450J6gd8YkBEJ8A220eJGkbDf?usp=sharing))] 
 ---
 
 ## 3. การ Build และติดตั้งแอป | Deployment (2 คะแนน / 2 pts)
