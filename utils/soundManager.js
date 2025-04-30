@@ -18,38 +18,37 @@ export const updateSoundSettings = (settings) => {
   console.log("Sound settings updated:", soundSettings)
 }
 
-// Import only the available sound files
-import clickSound from "../assets/sounds/click.mp3"
-import purchaseSound from "../assets/sounds/purchase.mp3"
-import achievementSound from "../assets/sounds/achievement.mp3"
-import chestOpenSound from "../assets/sounds/chest_open.mp3"
-
 // Preload sounds for better performance
 export const preloadSounds = async () => {
   try {
     console.log("Preloading sound effects...")
 
-    // Define only the available sounds to preload
+    // Define only the required sounds to preload
     const soundsToLoad = {
-      click: clickSound,
-      purchase: purchaseSound,
-      achievement: achievementSound,
-      chestOpen: chestOpenSound,
+      click: require("../assets/sounds/click.mp3"),
+      purchase: require("../assets/sounds/purchase.mp3"),
+      achievement: require("../assets/sounds/achievement.mp3"),
+      chestOpen: require("../assets/sounds/chest_open.mp3"),
     }
 
     // Load each sound into cache
     for (const [key, source] of Object.entries(soundsToLoad)) {
-      const { sound } = await Audio.Sound.createAsync(source, {
-        shouldPlay: false,
-        volume: 0.5,
-      })
-      soundCache[key] = sound
+      try {
+        const { sound } = await Audio.Sound.createAsync(source, {
+          shouldPlay: false,
+          volume: 0.5,
+        })
+        soundCache[key] = sound
+        console.log(`Sound loaded: ${key}`)
+      } catch (error) {
+        console.error(`Failed to load sound ${key}:`, error)
+      }
     }
 
     console.log("Sound preloading complete")
     return true
   } catch (error) {
-    console.error("Error preloading sounds:", error)
+    console.error("Failed to load sound effects:", error)
     return false
   }
 }

@@ -18,11 +18,11 @@ import { Audio } from "expo-av"
 // Add ToastNotification provider to the app
 import { ToastProvider } from "./context/ToastContext"
 
-// Ignore specific warnings - updated for SDK 52
+// Ignore specific warnings - updated for SDK 50
 LogBox.ignoreLogs([
   "Non-serializable values were found in the navigation state",
   "VirtualizedLists should never be nested",
-  // Add any new SDK 52 specific warnings here if they appear
+  // Add any new SDK 50 specific warnings here if they appear
 ])
 
 const Tab = createBottomTabNavigator()
@@ -68,7 +68,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    console.log("App initialized with Expo SDK 52.0.0")
+    console.log("App initialized with Expo SDK 50")
 
     // Request audio permissions and initialize audio
     const setupAudio = async () => {
