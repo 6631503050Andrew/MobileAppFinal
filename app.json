@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -26,13 +25,7 @@
         "backgroundColor": "#000000"
       },
       "package": "com.spaceclicker.app",
-      "permissions": [
-        "VIBRATE", 
-        "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.INTERNET",
-        "android.permission.SYSTEM_ALERT_WINDOW",
-        "android.permission.WAKE_LOCK"
-      ]
+      "permissions": ["VIBRATE", "INTERNET"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,7 +38,6 @@
         }
       ]
     ],
-    "sdkVersion": "52.0.0",
     "extra": {
       "eas": {
         "projectId": "9478ba27-d400-4939-b354-b9d90c0070fc"

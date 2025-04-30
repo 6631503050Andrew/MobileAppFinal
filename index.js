@@ -2,18 +2,18 @@ import "react-native-gesture-handler"
 import { registerRootComponent } from "expo"
 import { LogBox } from "react-native"
 
-// Ignore specific warnings - updated for SDK 52
+// Ignore specific warnings - updated for SDK 50
 LogBox.ignoreLogs([
   "Non-serializable values were found in the navigation state",
   "VirtualizedLists should never be nested",
-  // Add any new SDK 52 specific warnings here if they appear
+  // Add any new SDK 50 specific warnings here if they appear
 ])
 
 import App from "./App"
 
 // Enable debugging
 if (__DEV__) {
-  console.log("Running in development mode with Expo SDK 52.0.0")
+  console.log("Running in development mode with Expo SDK 50")
 }
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
