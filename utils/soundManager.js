@@ -39,6 +39,7 @@ export const preloadSounds = async () => {
           volume: 0.5,
         })
         soundCache[key] = sound
+        console.log(`Sound loaded: ${key}`)
       } catch (error) {
         console.error(`Failed to load sound ${key}:`, error)
       }

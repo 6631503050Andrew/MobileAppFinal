@@ -30,14 +30,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      [
-        "expo-av",
-        {
-          "microphonePermission": false
-        }
-      ]
-    ],
+    "plugins": ["expo-av"],
     "extra": {
       "eas": {
         "projectId": "9478ba27-d400-4939-b354-b9d90c0070fc"

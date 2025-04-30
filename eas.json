@@ -1,4 +1,9 @@
 {
+  "cli": {
+    "version": ">= 5.9.1",
+    "requireCommit": false,
+    "promptToConfigurePushNotifications": false
+  },
   "build": {
     "development": {
       "developmentClient": true,
@@ -14,24 +19,17 @@
       "android": {
         "buildType": "apk",
         "withoutCredentials": true,
-        "gradleCommand": ":app:assembleRelease",
-        "autoIncrement": true
+        "gradleCommand": ":app:assembleRelease"
       },
       "env": {
         "APP_ENV": "preview"
-      },
-      "prebuildCommand": "chmod -R +x ./assets && find ./assets -type d -exec chmod 755 {} \\;"
+      }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
       }
     }
-  },
-  "cli": {
-    "version": ">= 5.9.1",
-    "requireCommit": false,
-    "promptToConfigurePushNotifications": false
   },
   "submit": {
     "production": {}
