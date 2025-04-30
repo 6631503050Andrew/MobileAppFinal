@@ -148,12 +148,12 @@ Planned/Future Features:
 ### 2.3 ภาพหน้าจอแอป | App Screenshots  
 **แนบภาพหรือ URL (Attach images or image links):**
 ```markdown
-- ![SettingsScreen](SettingsScreen.jpg)
-- ![SpaceClickerScreen](SpaceClickerScreen.jpg)
-- ![StatsScreen](StatsScreen.jpg)
-- ![UpgradesScreen](UpgradesScreen.jpg)
-- ![UpgradesScreen2](UpgradesScreen2.jpg)
-- ![UpgradesScreen3](UpgradesScreen3.jpg)
+- ![SettingsScreen](images/SettingsScreen.jpg)
+- ![SpaceClickerScreen](images/SpaceClickerScreen.jpg)
+- ![StatsScreen](images/StatsScreen.jpg)
+- ![UpgradesScreen](images/UpgradesScreen.jpg)
+- ![UpgradesScreen2](images/UpgradesScreen2.jpg)
+- ![UpgradesScreen3](images/UpgradesScreen3.jpg)
 ```
 
 ---
