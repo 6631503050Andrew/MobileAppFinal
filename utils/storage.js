@@ -10,7 +10,12 @@ export const saveGameState = async (gameState) => {
       gameState.stats.version = "2.0.0"
     }
 
+    // SDK 52 - Improved error handling
     const jsonValue = JSON.stringify(gameState)
+    if (!jsonValue) {
+      throw new Error("Failed to stringify game state")
+    }
+
     await AsyncStorage.setItem(GAME_STATE_KEY, jsonValue)
     console.log("Game state saved successfully")
     return true

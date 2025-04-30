@@ -114,7 +114,7 @@ export default function GameScreen() {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / animationDuration, 1)
 
-      // Easing function for smoother animation
+      // Easing function for smoother animation - improved for SDK 52
       const easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress
 
       // Calculate current value

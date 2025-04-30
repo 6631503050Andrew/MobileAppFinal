@@ -30,17 +30,21 @@ const AccessibleTouchable = ({
     if (disabled) return
 
     if (useHaptic) {
-      switch (hapticType) {
-        case "medium":
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-          break
-        case "heavy":
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
-          break
-        case "light":
-        default:
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-          break
+      try {
+        switch (hapticType) {
+          case "medium":
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+            break
+          case "heavy":
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
+            break
+          case "light":
+          default:
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            break
+        }
+      } catch (error) {
+        console.error("Haptics error:", error)
       }
     }
 

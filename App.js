@@ -68,7 +68,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    console.log("App initialized with Expo SDK 50")
+    console.log("App initialized with Expo SDK 52")
 
     // Request audio permissions and initialize audio
     const setupAudio = async () => {
