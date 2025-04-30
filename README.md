@@ -148,14 +148,13 @@ Planned/Future Features:
 ### 2.3 ภาพหน้าจอแอป | App Screenshots  
 **แนบภาพหรือ URL (Attach images or image links):**
 
- ![SettingsScreen](images/SettingsScreen.jpg)
+
  ![SpaceClickerScreen](images/SpaceClickerScreen.jpg)
- ![StatsScreen](images/StatsScreen.jpg)
  ![UpgradesScreen](images/UpgradesScreen.jpg)
  ![UpgradesScreen2](images/UpgradesScreen2.jpg)
  ![UpgradesScreen3](images/UpgradesScreen3.jpg)
-
-
+ ![StatsScreen](images/StatsScreen.jpg)
+ ![SettingsScreen](images/SettingsScreen.jpg)
 ---
 
 ## 3. การ Build และติดตั้งแอป | Deployment (2 คะแนน / 2 pts)
