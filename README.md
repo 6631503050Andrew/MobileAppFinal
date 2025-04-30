@@ -36,7 +36,10 @@ Persona 2:
 
 ### 1.3 โครงร่างหน้าจอ / Mockup  
 **ใส่รูปภาพ หรือคำอธิบายแต่ละหน้าหลัก 3 หน้า | Attach image or describe 3 main pages**
-
+- Homescreen: The homescreen will display a planet on the center for the users to click on to generate currency. The currency number will be displayed at the top of the screen and along with the planet name.
+- Upgrades screen: The upgrades screen will be a basic shop function where users can click on upgrade tabs to purchase upgrades using their currency.
+- Stats screen: The stats screen will track and display basic information on what the user has done such as number of clicks, average income per second, . . .
+  
 ### 1.4 การไหลของผู้ใช้งาน | User Flow  
 **ตัวอย่าง (Example):**
 ```markdown
@@ -145,9 +148,12 @@ Planned/Future Features:
 ### 2.3 ภาพหน้าจอแอป | App Screenshots  
 **แนบภาพหรือ URL (Attach images or image links):**
 ```markdown
-- ![Dashboard](dashboard.png)
-- ![Schedule](schedule.png)
-- ![Reminder](reminder.png)
+- ![SettingsScreen](SettingsScreen.jpg)
+- ![SpaceClickerScreen](SpaceClickerScreen.jpg)
+- ![StatsScreen](StatsScreen.jpg)
+- ![UpgradesScreen](UpgradesScreen.jpg)
+- ![UpgradesScreen2](UpgradesScreen2.jpg)
+- ![UpgradesScreen3](UpgradesScreen3.jpg)
 ```
 
 ---
